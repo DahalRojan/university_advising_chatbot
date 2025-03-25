@@ -1,0 +1,6 @@
+langchain
+qdrant-client
+sentence-transformers
+streamlit
+python-dotenv
+requests

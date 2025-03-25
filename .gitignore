@@ -1,0 +1,19 @@
+# Node.js
+node_modules/
+build/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+env/
+*.egg-info/
+
+# OS / Editor
+.DS_Store
+.vscode/
+*.log
+
+# Environment
+.env

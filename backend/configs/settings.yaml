@@ -1,0 +1,4 @@
+chunk_size: 500
+chunk_overlap: 50
+embedding_model: bge-small-en
+llm_model: mistral-7b
