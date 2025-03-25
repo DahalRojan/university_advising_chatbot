@@ -1,6 +1,6 @@
 # Academic Advisor Assistant 🤖🎓
 
-This is an AI-powered academic advising tool built with [Your Stack - e.g., FastAPI + React + LLM API]. It simulates a helpful academic advisor assistant who offers students guidance on:
+This is an AI-powered academic advising tool built with [FastAPI + React + LLM API]. It simulates a helpful academic advisor assistant who offers students guidance on:
 
 - 📚 Course planning and degree progress
 - 🧠 Study techniques and time management
