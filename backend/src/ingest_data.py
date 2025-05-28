@@ -33,11 +33,33 @@ def load_documents(folder_path):
                 docs.append({"text": f.read(), "source": filename})
     return docs
 
-def chunk_text(text, size=500, overlap=50):
+def chunk_text(text, size=800, overlap=100):
+    # Split by paragraphs first
+    paragraphs = text.split("\n\n")
     chunks = []
-    for i in range(0, len(text), size - overlap):
-        chunks.append(text[i:i + size])
-    return chunks
+    current_chunk = ""
+    
+    for para in paragraphs:
+        if len(current_chunk) + len(para) <= size:
+            current_chunk += para + "\n\n"
+        else:
+            if current_chunk:
+                chunks.append(current_chunk.strip())
+            current_chunk = para + "\n\n"
+    
+    if current_chunk:
+        chunks.append(current_chunk.strip())
+        
+    # For very long paragraphs, apply sliding window
+    final_chunks = []
+    for chunk in chunks:
+        if len(chunk) > size:
+            for i in range(0, len(chunk), size - overlap):
+                final_chunks.append(chunk[i:i + size])
+        else:
+            final_chunks.append(chunk)
+            
+    return final_chunks
 
 def ingest():
     model = SentenceTransformer("BAAI/bge-small-en")
