@@ -16,7 +16,6 @@ This is an AI-powered academic advising tool built with [FastAPI + React + LLM A
 The system prompt used:
 > "You are a helpful academic advisor assistant. Your job is to provide clear, accurate, and student-friendly advice on academic planning, course selection, degree requirements, study tips, and related university policies. Always be supportive, informative, and concise. When answering, consider the student's background, goals, and any specific constraints they mention. If more information is needed, ask thoughtful follow-up questions to better assist them."
 
-## Getting Started
 ## 🚀 Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
@@ -124,3 +123,4 @@ You should now have both the backend and frontend services running locally!
 
 ## License
 MIT
+
