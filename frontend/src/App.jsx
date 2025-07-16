@@ -1,119 +1,132 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ChatWindow from './components/ChatWindow';
 import ChatInput from './components/ChatInput';
 import HistorySidebar from './components/HistorySidebar';
+import { Plus, Trash2 } from 'lucide-react';
 
 function App() {
   const [messages, setMessages] = useState([]);
   const [conversations, setConversations] = useState([]);
-  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [currentConversationId, setCurrentConversationId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSendMessage = async (message) => {
-    const newMessage = { text: message, sender: 'user', timestamp: new Date() };
-    const updatedMessages = [...messages, newMessage];
-    setMessages(updatedMessages);
+  // Load conversations from localStorage on initial render
+  useEffect(() => {
+    try {
+      const storedConversations = localStorage.getItem('chatConversations');
+      if (storedConversations) {
+        setConversations(JSON.parse(storedConversations));
+      }
+    } catch (error) {
+      console.error("Failed to parse conversations from localStorage", error);
+    }
+  }, []);
 
+  // Save conversations to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('chatConversations', JSON.stringify(conversations));
+    } catch (error) {
+      console.error("Failed to save conversations to localStorage", error);
+    }
+  }, [conversations]);
+
+  const handleSendMessage = async (messageText) => {
+    const newMessage = { text: messageText, sender: 'user', timestamp: new Date().toISOString() };
+    
     setIsLoading(true);
 
+    let conversationId = currentConversationId;
+    let updatedMessages;
+
+    if (conversationId === null) {
+      // Start a new conversation
+      conversationId = `conv_${Date.now()}`;
+      updatedMessages = [newMessage];
+      setConversations(prev => [...prev, { id: conversationId, messages: updatedMessages }]);
+    } else {
+      // Add to the existing conversation
+      const conversation = conversations.find(c => c.id === conversationId);
+      updatedMessages = [...conversation.messages, newMessage];
+      setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, messages: updatedMessages } : c));
+    }
+    
+    setMessages(updatedMessages);
+    setCurrentConversationId(conversationId);
+
     try {
+      // Replace with your actual API endpoint
       const response = await fetch('http://127.0.0.1:8000/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query: message }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: messageText }),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`API Error: ${response.statusText}`);
       }
 
       const data = await response.json();
-      const rawResponse = data.answer || 'Sorry, I couldn’t process your request.';
-
       const botResponse = {
-        rawText: rawResponse,
+        rawText: data.answer || 'Sorry, I had trouble understanding that.',
         sender: 'bot',
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       };
-
-      // Update messages state with the bot response
+      
       const finalMessages = [...updatedMessages, botResponse];
       setMessages(finalMessages);
+      setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, messages: finalMessages } : c));
 
-      // Update conversations state only once per message cycle
-      setConversations((prevConversations) => {
-        const updatedConversations = [...prevConversations];
-        if (selectedConversation === null) {
-          // New conversation
-          updatedConversations.push({
-            id: prevConversations.length,
-            messages: finalMessages,
-          });
-          setSelectedConversation(updatedConversations.length - 1);
-        } else {
-          // Update existing conversation
-          updatedConversations[selectedConversation] = {
-            id: selectedConversation,
-            messages: finalMessages,
-          };
-        }
-        return updatedConversations.slice(-5); // Keep only the last 5 conversations
-      });
     } catch (error) {
       console.error('Error fetching API:', error);
       const errorResponse = {
-        text: 'Oops, something went wrong. Please try again later.',
+        rawText: 'Oops! Something went wrong. Please check the console or try again.',
         sender: 'bot',
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
         isError: true,
       };
       const finalMessages = [...updatedMessages, errorResponse];
       setMessages(finalMessages);
-
-      // Update conversations state
-      setConversations((prevConversations) => {
-        const updatedConversations = [...prevConversations];
-        if (selectedConversation === null) {
-          updatedConversations.push({
-            id: prevConversations.length,
-            messages: finalMessages,
-          });
-          setSelectedConversation(updatedConversations.length - 1);
-        } else {
-          updatedConversations[selectedConversation] = {
-            id: selectedConversation,
-            messages: finalMessages,
-          };
-        }
-        return updatedConversations.slice(-5);
-      });
+      setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, messages: finalMessages } : c));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loadConversation = (index) => {
-    setSelectedConversation(index);
-    setMessages(conversations[index].messages);
+  const selectConversation = (id) => {
+    const conversation = conversations.find(c => c.id === id);
+    if (conversation) {
+      setCurrentConversationId(id);
+      setMessages(conversation.messages);
+    }
   };
 
   const startNewConversation = () => {
-    setSelectedConversation(null);
+    setCurrentConversationId(null);
     setMessages([]);
   };
 
+  const clearHistory = () => {
+    setConversations([]);
+    startNewConversation();
+  };
+
   return (
-    <div className="flex min-h-screen w-full bg-gray-900 text-white">
+    <div className="flex h-screen w-full bg-white text-gray-800 font-sans">
       <HistorySidebar
         conversations={conversations}
-        onSelectConversation={loadConversation}
+        onSelectConversation={selectConversation}
         onNewConversation={startNewConversation}
+        onClearHistory={clearHistory}
+        currentConversationId={currentConversationId}
+        NewChatIcon={Plus}
+        ClearHistoryIcon={Trash2}
       />
-      <div className="flex-1 flex flex-col">
-        <header className="p-4 bg-gray-800 border-b border-gray-700">
-          <h1 className="text-xl font-semibold">University Advising Chatbot</h1>
+      <div className="flex-1 flex flex-col bg-gray-50">
+        <header className="p-4 border-b border-gray-200 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-gray-900">
+            <span className="text-red-600">College</span>Advising Chat
+          </h1>
         </header>
         <ChatWindow messages={messages} isLoading={isLoading} />
         <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />

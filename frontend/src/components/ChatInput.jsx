@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Send } from 'lucide-react';
 
 function ChatInput({ onSendMessage, isLoading }) {
   const [input, setInput] = useState('');
@@ -12,27 +13,29 @@ function ChatInput({ onSendMessage, isLoading }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 bg-gray-800 border-t border-gray-700 w-full">
-      <div className="flex items-center space-x-2">
+    <div className="p-4 bg-white border-t border-gray-200">
+      <form onSubmit={handleSubmit} className="relative">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your question here..."
-          className="flex-1 p-3 rounded-lg bg-gray-700 text-white border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Ask me anything..."
+          className="w-full p-4 pr-16 rounded-xl bg-gray-100 text-gray-800 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 transition-shadow"
           disabled={isLoading}
+          autoFocus
         />
         <button
           type="submit"
-          className={`px-4 py-3 rounded-lg ${
-            isLoading ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+          className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors ${
+            isLoading ? 'bg-gray-300 cursor-not-allowed' : 'bg-red-500 text-white hover:bg-red-600'
           }`}
           disabled={isLoading}
+          aria-label="Send message"
         >
-          {isLoading ? 'Sending...' : 'Send'}
+          <Send className="w-5 h-5" />
         </button>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 }
 

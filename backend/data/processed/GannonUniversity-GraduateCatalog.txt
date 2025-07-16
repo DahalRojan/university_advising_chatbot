@@ -209,42 +209,42 @@ Semester Payment Plan..........................................................1
 Company/School District Reimbursements...........................11
 Financial Aid.............................................................................11
 	
-Federal Direct Student Loan (FDSL).....................................11
+Federal Direct Student Loan (FDSL)....................................11
 	
 Graduate Student Incentive Awards.......................................12
 	
 Grant for Diocesan Employees..............................................12
 	
-Career Exploration and Development....................................13
+Career Exploration and Development...................................13
 	
-Assistantships.........................................................................13
+Assistantships........................................................................13
 Academic Regulations..............................................................18
 The Library...............................................................................24
 Academic Computing...............................................................25
 Graduate Programs, Departments and Courses
-Anti-Money Laundering Certificate – Online.............................26
-Applied Exercise Physiology......................................................27
+Anti-Money Laundering Certificate – Online............................26
+Applied Exercise Physiology.....................................................27
 Athletic Training (MAT).............................................................31
-Biomedical Engineering..............................................................39
+Biomedical Engineering.............................................................39
 Business Administration (MBA)................................................42
 Business Analytics......................................................................45
-Business Essentials Certificate (Online).....................................50
+Business Essentials Certificate (Online)....................................50
 Clinical Mental Health Counseling (MS) ..................................52
-Computer and Information Science (MSCIS) ............................56	
+Computer and Information Science (MSCIS) ...........................56	
 Criminalistics (MSC)..................................................................67
 Education ...................................................................................70	
 Engineering.................................................................................87	
 Electrical Engineering (MSEE)..................................................87	
 Embedded Software Engineering (MSES).................................87
 	
-Engineering Management (MSEM).......................................97
+Engineering Management (MSEM)......................................97
 	
 Mechanical Engineering (MSME).........................................99
-Environmental Science and Management (MSEH)..................105
+Environmental Science and Management (MSEH).................105
 Healthcare Administration (MHA)...........................................110
 Healthcare Business Analytics Certificate – Online.................113
-Information Assurance and Cybersecurity................................115
-Nursing (BSN-DNP) Anesthesia...............................................126
+Information Assurance and Cybersecurity...............................115
+Nursing (BSN-DNP) Anesthesia..............................................126
 Nursing (MSN).........................................................................120
 Nursing Practice (DNP) ...........................................................131
 Occupational Therapy (MS).....................................................133
@@ -252,11 +252,11 @@ Post-Professional Occupational Therapy Doctorate (OTD) ....140
 Physical Therapy (DPT)...........................................................143
 Physician Assistant (MPAS) ....................................................153
 Public Administration (MPA)...................................................159
-Speech and Language Pathology (MS).....................................163
+Speech and Language Pathology (MS)....................................163
 Strategic Communication (MA)...............................................174
 Board of Trustees....................................................................177
 Administration........................................................................178
-Faculty......................................................................................178
+Faculty.....................................................................................178
 4
 The Diversity, Equity, and Inclusion (DEI) Office
 The Diversity, Equity, and Inclusion (DEI) Office provides resourc-
@@ -650,15 +650,15 @@ IELTS score or its equivalent.
 	
 e.	 English3 68
 	
-f.		 PTE (Pearson Test of English) 53
+f.	 PTE (Pearson Test of English) 53
 	
 g.	 Duolingo 110 for most programs; see program for details
 	
 h.	 iTEP 3.8
 	
-i.		 ELS Language Center, Level 112
+i.	 ELS Language Center, Level 112
 	
-j.		 Completion of Gannon University’s English as a Second 
+j.	 Completion of Gannon University’s English as a Second 
 Language Program
 *	 see Office of Global Admission website for other accepted 
 evidence of proficiency.
@@ -1228,7 +1228,7 @@ P	 (Pass)
 	 	 	
 	
 0
-AU	(Audit)		 	 	
+AU	(Audit)	 	 	
 	
 0
 14
@@ -2081,7 +2081,7 @@ of their general interest:
 sent directly to all students at their home address.
 •   Access to student records is permitted only upon receipt of a 
 written release by the student.
-•   Students may have access to parental financial records  
+•   Students may have access to parental financial records 
 submitted in support of financial aid applications.
 •   With certain exceptions, each student has access to his or her 
 personal and academic records.
@@ -2376,12 +2376,12 @@ the world.
 computer labs throughout campus.
 •	 MS Office 365 (full versions of Word, Excel, One Note, 
 PowerPoint, etc) is available to students at no charge.
-•	 labs and classrooms with equipment geared to specific  
+•	 labs and classrooms with equipment geared to specific 
 discipline requirements in several departments including 
 Biology, Business, Chemistry, Computer Science, Health 
 Sciences, Communications, Mechanical Engineering, and 
 Electrical Engineering.
-•	 access to view your tuition bill, grades, schedule, and  
+•	 access to view your tuition bill, grades, schedule, and 
 transcript as well as view available courses and schedule online. 
 You can also print your academic evaluation, register, or drop 
 classes online.
@@ -5655,13 +5655,13 @@ WAIVER OF COURSES
 Students must complete the waiver process within the first semester 
 of beginning coursework. The foundations-series courses can be 
 waived. The foundations-series courses are listed below.
-•   GCIS 506		 Obj.-Ori. Programming in Java
-•   GCIS 507		 Data Structures
-•   GCIS 508		 Database Management Systems
-•   GCIS 509		 System Analysis and Design
-•   GCIS 510 		 Software Engineering
-•   GCIS 580		 Programming in Unix
-•   GCIS 581		 Introduction to Networks
+•   GCIS 506		 Obj.-Ori. Programming in Java
+•   GCIS 507		 Data Structures
+•   GCIS 508		 Database Management Systems
+•   GCIS 509		 System Analysis and Design
+•   GCIS 510 	 Software Engineering
+•   GCIS 580		 Programming in Unix
+•   GCIS 581		 Introduction to Networks
 Any of the foundations series courses may be waived in either of 
 the following ways:
 1.	 Waiver by Transcript
@@ -5799,7 +5799,7 @@ and applied research methods.
 (GCIS 698/699) or thesis (GCIS 799) work. Students 
 must have completed 12 credits of graduate work, 
 have completed all prerequisites including a formal 
-proposal of their project to register for their project work.  
+proposal of their project to register for their project work. 
 Students are encouraged to begin developing and planning 
 their project work well in advance of the semester in which 
 they register for their directed research or thesis credits.
@@ -5838,7 +5838,7 @@ including Data Engineer, Data Architect, Statistical Programmer,
 and Big Data Analysts.
 In addition to the overall program outcomes, at the conclusion of 
 the program of study, the DS-option graduate will be able to:
-DS-1.		 Identify patterns in data using data mining techniques.
+DS-1.	 Identify patterns in data using data mining techniques.
 DS-2.		 Manage large-scale data and the practical issues surrounding 
 how the data is stored, processed, and analyzed in the cloud
 DS-3		 Extract knowledge from large amounts of text data
@@ -7851,7 +7851,7 @@ August–October
 GEDU 740 Superintendent as Architect of  
 Standards-based Reform
 1 credit	 	
-GEDU 748 Superintendent Introductory Internship  
+GEDU 748 Superintendent Introductory Internship 
 (35 hours)
 October–December
 3 credits		
@@ -7882,7 +7882,7 @@ GEDU 742 Educational Facilities and School Plant
 GEDU 745 Educational Facilities and School Plant 
 Developmental Internship (20 hours)
 3 credits		
-GEDU 750 Superintendent Mastery Internship  
+GEDU 750 Superintendent Mastery Internship 
 (235 hours)
 1 credit	 	
 GEDU 751 Superintendent Professional Portfolio
@@ -8293,7 +8293,7 @@ This course explores elements needed to develop a productive
 learning environment for diverse learners and examines methods 
 used to provide effective instruction to diverse students through the 
 lens of collaboration, co-teaching, and research-based strategies.
-GEDU 612 Leadership, Current Issues  
+GEDU 612 Leadership, Current Issues  
 and the Teacher as Agent of Change
 3 credits
 A major theme in the master’s program is Teacher as Agent of 
@@ -8940,7 +8940,7 @@ CPT
 	
 CPT
 Fall Third Semester
-RTOS Applications+		 	 	
+RTOS Applications+	 	 	
 	
 Control of Electric Drives
 Hw/Sw Co-design	 	 	 	
@@ -8955,7 +8955,7 @@ CPT
 	
 CPT
 Spring Fourth Semester 	
-Project/thesis		 	
+Project/thesis	 	
 	
 	 	 	
 	
@@ -8966,7 +8966,7 @@ Elective
 	 	 	
 	
 Digital Control
-Elective 		
+Elective 	
 	 	 	
 	
 	 	 	
@@ -11347,24 +11347,24 @@ PROGRAM OUTCOMES
 At the conclusion of study leading to the degree of Master of 
 Science in Information Assurance and Cybersecurity, the graduate 
 is able to:
-IA&C-1.		
+IA&C-1.	
 Identify patterns in cybersecurity intrusion detection 
 and preventing techniques.
-IA&C-2.		
+IA&C-2.	
 Manage large-scale network management and security 
 implementation on ground and cloud and the practical 
 issues surrounding how the data privacy and security.
-IA&C-3.		
+IA&C-3.	
 Able to use creativity, critical thinking, and analysis 
 and research skills to solve theoretical and real-world 
 problems in cybersecurity field.
-IA&C-4.		
+IA&C-4.	
 Recognize professional responsibilities including and 
 make informed decisions in cybersecurity practice.
-IA&C-5.		
+IA&C-5.	
 Communicate competently in a variety of cybersecurity 
 professional contexts. 
-IA&C-6.		
+IA&C-6.	
 Provide a research or development contribution or 
 development of value to the profession, industry 
 or society
@@ -12167,7 +12167,7 @@ Thesis Guidance
 1
 1 credit
 Total credits: 48 
-NOTE: * indicates courses required for a Nurse Anesthesia  
+NOTE: * indicates courses required for a Nurse Anesthesia 
 Certificate.
 The Nurse Anesthesia program and Certificate options are also 
 accredited by the Council on Accreditation of Nurse Anesthesia 
@@ -15476,7 +15476,7 @@ responsible for their own housing and transportation to and from
 clinical sites.
 The PA program curriculum of the Gannon University Physician 
 Assistant Program is accredited by the Accreditation Review 
-Commission on Education for the Physician Assistant, Inc.  
+Commission on Education for the Physician Assistant, Inc. 
 (ARC-PA).
 The Accreditation Review Commission on Education for the 
 Physician Assistant (ARC-PA) has granted Accreditation-
@@ -19325,73 +19325,73 @@ Index
 Academic Computing.................................................................25
 Academic Integrity Policy..........................................................18
 Academic Regulations................................................................18
-Accreditation.................................................................................2
+Accreditation................................................................................2
 Administration..........................................................................178
 Admission.....................................................................................7
 Anti-Money Laundering.............................................................26
 Applied Exercise Science...........................................................27
-Assistantships..............................................................................13
+Assistantships.............................................................................13
 Athletic Training.........................................................................31
 Auditing......................................................................................17
-Biomedical Engineering..............................................................39
+Biomedical Engineering.............................................................39
 Board of Trustees......................................................................177
 Business Administration ............................................................42
-Career Exploration and Development.........................................13
+Career Exploration and Development........................................13
 Certificates....................................................................................6 
 Changing Graduate Programs.....................................................16
-Class Attendance.........................................................................13
-Clinical Mental Health Counseling.............................................52
+Class Attendance........................................................................13
+Clinical Mental Health Counseling............................................52
 Computer and Information Science............................................56
-Concurrent Graduate Degrees.....................................................16
+Concurrent Graduate Degrees....................................................16
 Criminalistics..............................................................................67
-Dismissal.....................................................................................14
+Dismissal....................................................................................14
 Doctoral Programs........................................................................6
 Education....................................................................................70
-Electrical Engineering.................................................................87
+Electrical Engineering................................................................87
 Embedded Software Engineering...............................................87
 Engineering Management...........................................................97
 English Language Requirements (TOEFL)..................................8
-Environmental Science and Management.................................105
+Environmental Science and Management................................105
 Faculty......................................................................................178
-Federal Direct Student Loan (FDSL)..........................................11
-Financial Aid...............................................................................11
-Global Students.............................................................................8
+Federal Direct Student Loan (FDSL).........................................11
+Financial Aid..............................................................................11
+Global Students............................................................................8
 Grade Point Average Computation.............................................14
-Grading System...........................................................................13
-Graduate Student Designations.....................................................7
-Graduation ..................................................................................18
+Grading System..........................................................................13
+Graduate Student Designations....................................................7
+Graduation .................................................................................18
 Healthcare Administration........................................................110
 Incomplete Grades......................................................................14
-Information Assurance and Cybersecurity................................115
-Interruption of Study...................................................................17
-Library.........................................................................................24
-Master’s Degree Programs............................................................6
+Information Assurance and Cybersecurity...............................115
+Interruption of Study..................................................................17
+Library........................................................................................24
+Master’s Degree Programs...........................................................6
 Mechanical Engineering.............................................................99
-Medical Leave.............................................................................22
-Mission Statement.........................................................................1
-Nursing......................................................................................126
-Nursing (BSN-DNP) Anesthesia...............................................126
-Nursing DNP.............................................................................131
+Medical Leave............................................................................22
+Mission Statement........................................................................1
+Nursing.....................................................................................126
+Nursing (BSN-DNP) Anesthesia..............................................126
+Nursing DNP............................................................................131
 Occupational Therapy...............................................................133
 Occupational Therapy Doctorate..............................................140
-Online Student Services..............................................................10
+Online Student Services.............................................................10
 Payment......................................................................................11
-Physical Therapy ......................................................................143
+Physical Therapy .....................................................................143
 Physician Assistant...................................................................153
 Programs of Study........................................................................6
 Public Administration...............................................................159
-Repeat Courses............................................................................17
+Repeat Courses...........................................................................17
 Scheduling..................................................................................13
-Second Master’s Degrees............................................................17
-Speech-Language Pathology.....................................................163
-Standardized Admissions Tests.....................................................7
-Statute of Limitations..................................................................14
-Strategic Communication..........................................................174
-Student Services..........................................................................24
+Second Master’s Degrees...........................................................17
+Speech-Language Pathology....................................................163
+Standardized Admissions Tests....................................................7
+Statute of Limitations.................................................................14
+Strategic Communication.........................................................174
+Student Services.........................................................................24
 Transcript Policy.........................................................................22
 Transfer of Credits......................................................................16
-Tuition and Fees..........................................................................10
-Withdrawal..................................................................................22
+Tuition and Fees.........................................................................10
+Withdrawal.................................................................................22
 194
 109 University Square
 Erie, Pennsylvania 16541

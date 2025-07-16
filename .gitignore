@@ -10,6 +10,13 @@ __pycache__/
 env/
 *.egg-info/
 
+# Ignore everything inside processed and raw
+# Ignore all files inside raw and processed, but not the folders
+backend/data/raw/*
+backend/data/processed/*
+!backend/data/raw/
+!backend/data/processed/
+
 # OS / Editor
 .DS_Store
 .vscode/
@@ -17,3 +24,5 @@ env/
 
 # Environment
 .env
+Dockerfile
+.dockerignore

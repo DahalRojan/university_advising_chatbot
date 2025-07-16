@@ -3,5 +3,80 @@
     "filename": "GannonUniversity-GraduateCatalog.txt",
     "hash": "d869ca427c575782bb90139bc693c7f6",
     "embedded_on": "2025-03-23T18:51:30.110904"
+  },
+  {
+    "filename": "GannonUniversity-AcademicCalendar.txt",
+    "hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "embedded_on": "2025-07-15T21:07:15.880183"
+  },
+  {
+    "filename": "GannonUniversity-Accreditation.txt",
+    "hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "embedded_on": "2025-07-15T21:07:15.880183"
+  },
+  {
+    "filename": "GannonUniversity-CampusSafety.txt",
+    "hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "embedded_on": "2025-07-15T21:07:15.890301"
+  },
+  {
+    "filename": "GannonUniversity-EthicsPoint.txt",
+    "hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "embedded_on": "2025-07-15T21:07:15.894210"
+  },
+  {
+    "filename": "GannonUniversity-FinalAwardBrochure.txt",
+    "hash": "9b02eca4a9f73594495255c030352197",
+    "embedded_on": "2025-07-15T21:07:17.427157"
+  },
+  {
+    "filename": "GannonUniversity-FinalAwardBrochureGraduate2025-2026.txt",
+    "hash": "11e9499a00f35e607cd5491bc373aae4",
+    "embedded_on": "2025-07-15T21:07:18.843543"
+  },
+  {
+    "filename": "GannonUniversity-FinancialAid.txt",
+    "hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "embedded_on": "2025-07-15T21:07:18.846542"
+  },
+  {
+    "filename": "GannonUniversity-GraduateCatalog.txt",
+    "hash": "2ea2446979fc11d10d209f4b353bf588",
+    "embedded_on": "2025-07-15T21:09:05.945747"
+  },
+  {
+    "filename": "GannonUniversity-GUASR.txt",
+    "hash": "84d926c142596fe45c194f436c3e7e44",
+    "embedded_on": "2025-07-15T21:09:21.256696"
+  },
+  {
+    "filename": "GannonUniversity-RetentionRate.txt",
+    "hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "embedded_on": "2025-07-15T21:09:21.256696"
+  },
+  {
+    "filename": "GannonUniversity-SatisfactoryAcademicProgressPolicy.txt",
+    "hash": "69419be4dd685b0fa882f020dd052108",
+    "embedded_on": "2025-07-15T21:09:21.964692"
+  },
+  {
+    "filename": "GannonUniversity-SexualMisconductTitleIXPolicy.txt",
+    "hash": "66753c2489789cca6ef87b2452f5e5e6",
+    "embedded_on": "2025-07-15T21:09:46.133046"
+  },
+  {
+    "filename": "GannonUniversity-StudentHandbook.txt",
+    "hash": "ee1d5d15b73d0f00706f3ca3b7cb7388",
+    "embedded_on": "2025-07-15T21:10:03.740789"
+  },
+  {
+    "filename": "GannonUniversity-TransferChecklist.txt",
+    "hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "embedded_on": "2025-07-15T21:10:03.743680"
+  },
+  {
+    "filename": "GannonUniversity-UndergraduateCatalog.txt",
+    "hash": "0635a560bd4fac07ff53ee6f9060ca16",
+    "embedded_on": "2025-07-15T21:14:38.464508"
   }
 ]
