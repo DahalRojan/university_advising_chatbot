@@ -40,8 +40,10 @@ You must respond in a valid JSON format with the following keys:
     messages = [{"role": "system", "content": system_prompt}]
 
     for turn in history:
-        messages.append({"role": "user", "content": turn["user"]})
-        messages.append({"role": "assistant", "content": json.dumps(turn["assistant"])})
+        if turn["sender"].lower() == "user":
+            messages.append({"role": "user", "content": turn["text"]})
+        else:
+            messages.append({"role": "assistant", "content": turn["text"]})
 
     messages.append({"role": "user", "content": f"Context:\n{context}\n\nQuestion: {user_input}"})
 
