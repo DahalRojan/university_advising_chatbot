@@ -1,7 +1,8 @@
 import os
 import uuid
 from fastapi import FastAPI, Request, Depends, HTTPException, status
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse, JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
@@ -30,10 +31,21 @@ if missing_vars:
 
 app = FastAPI()
 
+# Mount static files (frontend)
+if os.path.exists("./frontend/dist"):
+    app.mount("/static", StaticFiles(directory="./frontend/dist/assets"), name="static")
+
 # Health check endpoint for Cloud Run
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+# Serve frontend
+@app.get("/")
+async def serve_frontend():
+    if os.path.exists("./frontend/dist/index.html"):
+        return FileResponse("./frontend/dist/index.html")
+    return {"message": "Frontend not found - API only mode"}
 
 # Frontend URL configuration
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
