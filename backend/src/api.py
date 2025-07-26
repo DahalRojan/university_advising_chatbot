@@ -31,18 +31,24 @@ if missing_vars:
 
 app = FastAPI()
 
-# Mount static files (frontend)
+# Mount static files (frontend assets)
 if os.path.exists("./frontend/dist"):
-    app.mount("/static", StaticFiles(directory="./frontend/dist/assets"), name="static")
+    app.mount("/assets", StaticFiles(directory="./frontend/dist/assets"), name="assets")
+    app.mount("/static", StaticFiles(directory="./frontend/dist"), name="static")
 
 # Health check endpoint for Cloud Run
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
 
-# Serve frontend
+# Serve frontend for all non-API routes
 @app.get("/")
-async def serve_frontend():
+@app.get("/{path:path}")
+async def serve_frontend(path: str = ""):
+    # Don't serve frontend for API routes
+    if path.startswith(("api/", "health", "login", "auth", "logout", "user/", "chat", "test/")):
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+    
     if os.path.exists("./frontend/dist/index.html"):
         return FileResponse("./frontend/dist/index.html")
     return {"message": "Frontend not found - API only mode"}
