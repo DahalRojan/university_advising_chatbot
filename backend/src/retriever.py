@@ -32,6 +32,27 @@ except Exception as e:
 client = QdrantClient(path="./vector_db")
 COLLECTION = "student_docs"
 
+# Auto-initialize collection if it doesn't exist
+def ensure_collection_exists():
+    """Ensure the Qdrant collection exists, create if missing."""
+    try:
+        collection_names = [c.name for c in client.get_collections().collections]
+        if COLLECTION not in collection_names:
+            print(f"Creating missing collection: {COLLECTION}")
+            from qdrant_client.http.models import VectorParams, Distance
+            client.recreate_collection(
+                collection_name=COLLECTION,
+                vectors_config=VectorParams(size=384, distance=Distance.COSINE)
+            )
+            print(f"✅ Collection {COLLECTION} created successfully")
+        else:
+            print(f"✅ Collection {COLLECTION} already exists")
+    except Exception as e:
+        print(f"❌ Error ensuring collection exists: {e}")
+
+# Initialize collection on import
+ensure_collection_exists()
+
 def extract_keywords(query: str) -> list[str]:
     """
     Extracts potential course codes and key terms from a query.

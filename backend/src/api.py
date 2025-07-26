@@ -328,6 +328,35 @@ async def test_auth(request: Request):
         "user_info": user if user else None
     }
 
+@app.post("/admin/ingest")
+async def trigger_data_ingestion():
+    """Admin endpoint to run data ingestion"""
+    try:
+        from .ingest_data import ingest
+        ingest()
+        return {"message": "Data ingestion completed successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
+
+@app.get("/admin/collection-status")
+async def check_collection_status():
+    """Check vector database collection status"""
+    try:
+        from .retriever import client, COLLECTION
+        collections = [c.name for c in client.get_collections().collections]
+        collection_info = None
+        if COLLECTION in collections:
+            collection_info = client.get_collection(COLLECTION)
+        
+        return {
+            "collection_exists": COLLECTION in collections,
+            "collection_name": COLLECTION,
+            "all_collections": collections,
+            "collection_info": collection_info.dict() if collection_info else None
+        }
+    except Exception as e:
+        return {"error": str(e), "collection_exists": False}
+
 # Catch-all route for SPA routing (must be last!)
 @app.get("/{path:path}")
 async def serve_spa_routes(path: str):
