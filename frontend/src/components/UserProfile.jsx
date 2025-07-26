@@ -13,7 +13,7 @@ const UserProfile = ({ onLogout }) => {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await fetch('http://localhost:8000/user/profile', {
+      const response = await fetch(`${window.location.origin}/user/profile`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -30,7 +30,7 @@ const UserProfile = ({ onLogout }) => {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:8000/logout', {
+      await fetch(`${window.location.origin}/logout`, {
         method: 'POST',
         credentials: 'include',
       });

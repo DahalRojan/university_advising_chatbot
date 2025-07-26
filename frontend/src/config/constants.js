@@ -48,7 +48,7 @@ export const CONFIG = {
 
 // Environment-specific overrides
 if (process.env.NODE_ENV === 'production') {
-  CONFIG.API_BASE_URL = process.env.REACT_APP_API_URL || 'https://your-production-api.com';
+  CONFIG.API_BASE_URL = process.env.REACT_APP_API_URL || window.location.origin;
 }
 
 export default CONFIG;

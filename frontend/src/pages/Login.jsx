@@ -3,7 +3,7 @@ import { CheckCircle, MessageCircle, Calendar, GraduationCap, BookOpen, Users } 
 
 const Login = () => {
   const handleLogin = () => {
-    window.location.href = "http://localhost:8000/login";
+    window.location.href = `${window.location.origin}/login`;
   };
 
   const features = [

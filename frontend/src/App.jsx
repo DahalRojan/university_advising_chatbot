@@ -8,6 +8,7 @@ import UserProfile from './components/UserProfile';
 import ErrorBoundary from './components/ErrorBoundary';
 import { FullPageLoader } from './components/LoadingSpinner';
 import { Plus, Trash2, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { CONFIG } from './config/constants';
 import { v4 as uuidv4 } from 'uuid';
 
 function ChatApp({ onLogout }) {
@@ -37,7 +38,7 @@ function ChatApp({ onLogout }) {
     setIsLoadingSessions(true);
     try {
       // First, try to load from server
-      const response = await fetch('http://localhost:8000/user/sessions', {
+      const response = await fetch(`${CONFIG.API_BASE_URL}/user/sessions`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -108,7 +109,7 @@ function ChatApp({ onLogout }) {
     setCurrentConversationId(conversationId);
 
     try {
-      const response = await fetch('http://localhost:8000/chat', {
+      const response = await fetch(`${CONFIG.API_BASE_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -224,7 +225,7 @@ function ChatApp({ onLogout }) {
       if (conversation.isFromServer && (!conversation.messages || conversation.messages.length === 0)) {
         setIsLoading(true);
         try {
-          const response = await fetch(`http://localhost:8000/chat/${id}/history`, {
+          const response = await fetch(`${CONFIG.API_BASE_URL}/chat/${id}/history`, {
             method: 'GET',
             credentials: 'include',
           });
@@ -280,7 +281,7 @@ function ChatApp({ onLogout }) {
 
   const deleteConversation = async (conversationId) => {
     try {
-      const response = await fetch(`http://localhost:8000/chat/${conversationId}`, {
+      const response = await fetch(`${CONFIG.API_BASE_URL}/chat/${conversationId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -421,7 +422,7 @@ function App() {
 
   const checkAuthStatus = async (retries = 3) => {
     try {
-      const response = await fetch("http://localhost:8000/auth/status", {
+      const response = await fetch(`${CONFIG.API_BASE_URL}/auth/status`, {
         method: "GET",
         credentials: "include",
         timeout: 10000, // 10 second timeout
