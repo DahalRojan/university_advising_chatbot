@@ -63,9 +63,10 @@ app.add_middleware(
 app.add_middleware(
     SessionMiddleware, 
     secret_key=required_env_vars['SESSION_SECRET'],
-    max_age=None,  # Session cookie expires when browser closes
+    max_age=3600,  # 1 hour session
     same_site='lax',  # Allow cross-site requests for OAuth
-    https_only=False  # Set to True in production
+    https_only=True,  # Use HTTPS cookies in production
+    domain=None  # Same domain only
 )
 
 # OAuth configuration
