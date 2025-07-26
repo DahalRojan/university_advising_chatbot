@@ -41,14 +41,9 @@ if os.path.exists("./frontend/dist"):
 async def health():
     return {"status": "healthy"}
 
-# Serve frontend for all non-API routes
+# Serve frontend root
 @app.get("/")
-@app.get("/{path:path}")
-async def serve_frontend(path: str = ""):
-    # Don't serve frontend for API routes
-    if path.startswith(("api/", "health", "login", "auth", "logout", "user/", "chat", "test/")):
-        raise HTTPException(status_code=404, detail="API endpoint not found")
-    
+async def serve_frontend_root():
     if os.path.exists("./frontend/dist/index.html"):
         return FileResponse("./frontend/dist/index.html")
     return {"message": "Frontend not found - API only mode"}
@@ -330,3 +325,11 @@ async def test_auth(request: Request):
         "user_authenticated": bool(user),
         "user_info": user if user else None
     }
+
+# Catch-all route for SPA routing (must be last!)
+@app.get("/{path:path}")
+async def serve_spa_routes(path: str):
+    """Serve frontend for all non-API routes (SPA routing)"""
+    if os.path.exists("./frontend/dist/index.html"):
+        return FileResponse("./frontend/dist/index.html")
+    return {"message": "Frontend not found - API only mode"}
