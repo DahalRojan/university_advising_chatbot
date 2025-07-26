@@ -122,7 +122,8 @@ class ChatResponse(BaseModel):
 
 @app.get('/login')
 async def login(request: Request):
-    redirect_uri = request.url_for('auth')
+    # Force HTTPS for Cloud Run
+    redirect_uri = str(request.url_for('auth')).replace('http://', 'https://')
     return await oauth.azure.authorize_redirect(request, redirect_uri)
 
 @app.get('/auth')
@@ -147,7 +148,7 @@ async def auth(request: Request):
                 'client_secret': CLIENT_SECRET,
                 'code': code,
                 'grant_type': 'authorization_code',
-                'redirect_uri': str(request.url_for('auth')),
+                'redirect_uri': str(request.url_for('auth')).replace('http://', 'https://'),
                 'scope': 'openid profile email User.Read'
             }
             
