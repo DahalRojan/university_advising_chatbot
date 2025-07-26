@@ -27,7 +27,7 @@ steps:
   - '--cpu'
   - '2'
   - '--set-env-vars'
-  - 'PORT=8080,PYTHONPATH=/app/backend'
+  - 'PYTHONPATH=/app/backend'
 
 # Set timeout for long builds
 timeout: '1200s'
