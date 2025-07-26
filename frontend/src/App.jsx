@@ -5,8 +5,9 @@ import ChatWindow from './components/ChatWindow';
 import ChatInput from './components/ChatInput';
 import HistorySidebar from './components/HistorySidebar';
 import UserProfile from './components/UserProfile';
+import ErrorBoundary from './components/ErrorBoundary';
 import { FullPageLoader } from './components/LoadingSpinner';
-import { Plus, Trash2, Menu } from 'lucide-react';
+import { Plus, Trash2, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 function ChatApp({ onLogout }) {
@@ -14,7 +15,8 @@ function ChatApp({ onLogout }) {
   const [conversations, setConversations] = useState([]);
   const [currentConversationId, setCurrentConversationId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile sidebar
+  const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(true); // Desktop sidebar
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   const [scrollToBottom, setScrollToBottom] = useState(true);
 
@@ -163,17 +165,32 @@ function ChatApp({ onLogout }) {
       }
 
     } catch (error) {
-      console.error('Error fetching API:', error);
+      console.error('Error sending message:', error);
+      
+      // Provide user-friendly error messages based on error type
+      let errorMessage = 'I apologize, but I encountered an issue. Please try again.';
+      
+      if (error.name === 'NetworkError' || error.message.includes('fetch')) {
+        errorMessage = 'Unable to connect to the server. Please check your internet connection and try again.';
+      } else if (error.message.includes('timeout')) {
+        errorMessage = 'The request took too long to process. Please try again.';
+      } else if (error.message.includes('500')) {
+        errorMessage = 'The server is experiencing issues. Please try again in a moment.';
+      } else if (error.message.includes('429')) {
+        errorMessage = 'Too many requests. Please wait a moment before trying again.';
+      }
+      
       const errorResponse = {
-        rawText: 'Oops! Something went wrong. Please check the console or try again.',
+        rawText: errorMessage,
         sender: 'bot',
         timestamp: new Date().toISOString(),
         isError: true,
       };
+      
       const finalMessages = [...updatedMessages, errorResponse];
       setMessages(finalMessages);
       
-      // Update conversations with error message too
+      // Update conversations with error message
       if (conversationId) {
         setConversations(prev => prev.map(c => 
           c.id === conversationId ? { ...c, messages: finalMessages, lastMessage: new Date().toISOString() } : c
@@ -181,6 +198,17 @@ function ChatApp({ onLogout }) {
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const retryMessage = (messageIndex) => {
+    if (messageIndex > 0) {
+      const userMessage = messages[messageIndex - 1];
+      if (userMessage && userMessage.sender === 'user') {
+        // Remove the error message and retry
+        setMessages(prev => prev.slice(0, messageIndex));
+        handleSendMessage(userMessage.text);
+      }
     }
   };
 
@@ -242,6 +270,7 @@ function ChatApp({ onLogout }) {
     setCurrentConversationId(null);
     setMessages([]);
     setIsSidebarOpen(false); // Close sidebar on new chat
+    setScrollToBottom(true); // Reset to scroll to bottom for new conversations
     
     // Generate new session ID for the new conversation
     const newSessionId = uuidv4();
@@ -287,18 +316,20 @@ function ChatApp({ onLogout }) {
       </div>
 
       {/* Sidebar for Desktop */}
-      <div className="hidden md:flex md:flex-shrink-0 relative z-10">
-        <HistorySidebar
-          conversations={conversations}
-          onSelectConversation={selectConversation}
-          onNewConversation={startNewConversation}
-          onDeleteConversation={deleteConversation}
-          currentConversationId={currentConversationId}
-          NewChatIcon={Plus}
-          setIsOpen={setIsSidebarOpen}
-          isLoadingSessions={isLoadingSessions}
-        />
-      </div>
+      {isDesktopSidebarOpen && (
+        <div className="hidden md:flex md:flex-shrink-0 relative z-10 sidebar-transition">
+          <HistorySidebar
+            conversations={conversations}
+            onSelectConversation={selectConversation}
+            onNewConversation={startNewConversation}
+            onDeleteConversation={deleteConversation}
+            currentConversationId={currentConversationId}
+            NewChatIcon={Plus}
+            setIsOpen={setIsSidebarOpen}
+            isLoadingSessions={isLoadingSessions}
+          />
+        </div>
+      )}
 
       {/* Mobile Sidebar (off-canvas) */}
       <div
@@ -326,15 +357,29 @@ function ChatApp({ onLogout }) {
         ></div>
       )}
 
-      <div className="flex-1 flex flex-col h-full relative z-10">
+      <div className="flex-1 flex flex-col h-full relative z-10 chat-expand">
         <header className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between z-20 bg-white/80 backdrop-blur-xl shadow-sm">
           <div className="flex items-center space-x-3">
+            {/* Mobile menu button */}
             <button
               className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200 md:hidden"
               onClick={() => setIsSidebarOpen(true)}
               aria-label="Open history menu"
             >
               <Menu className="w-5 h-5" />
+            </button>
+            {/* Desktop sidebar toggle */}
+            <button
+              className="hidden md:flex p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200"
+              onClick={() => setIsDesktopSidebarOpen(!isDesktopSidebarOpen)}
+              aria-label={isDesktopSidebarOpen ? "Hide sidebar" : "Show sidebar"}
+              title={isDesktopSidebarOpen ? "Hide history sidebar" : "Show history sidebar"}
+            >
+              {isDesktopSidebarOpen ? (
+                <PanelLeftClose className="w-5 h-5" />
+              ) : (
+                <PanelLeftOpen className="w-5 h-5" />
+              )}
             </button>
             <div className="flex items-center space-x-3">
               <img
@@ -354,8 +399,13 @@ function ChatApp({ onLogout }) {
           </div>
         </header>
         <main className="flex-1 flex flex-col overflow-hidden bg-white/20 backdrop-blur-sm">
-          <div className="flex-1 bg-gradient-to-b from-white/50 to-white/20 backdrop-blur-sm">
-            <ChatWindow messages={messages} isLoading={isLoading} scrollToBottom={scrollToBottom} />
+          <div className="flex-1 bg-gradient-to-b from-white/50 to-white/20 backdrop-blur-sm overflow-hidden">
+            <ChatWindow 
+              messages={messages} 
+              isLoading={isLoading} 
+              scrollToBottom={scrollToBottom}
+              onRetryMessage={retryMessage}
+            />
           </div>
           <div className="bg-white/80 backdrop-blur-xl border-t border-gray-100">
             <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
@@ -369,14 +419,30 @@ function ChatApp({ onLogout }) {
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
 
-  const checkAuthStatus = () => {
-    fetch("http://localhost:8000/auth/status", {
-      method: "GET",
-      credentials: "include", // Important: send cookies!
-    })
-      .then((res) => res.json())
-      .then((data) => setIsAuthenticated(data.authenticated))
-      .catch(() => setIsAuthenticated(false));
+  const checkAuthStatus = async (retries = 3) => {
+    try {
+      const response = await fetch("http://localhost:8000/auth/status", {
+        method: "GET",
+        credentials: "include",
+        timeout: 10000, // 10 second timeout
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      setIsAuthenticated(data.authenticated);
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      
+      if (retries > 0 && error.name !== 'AbortError') {
+        // Retry after delay
+        setTimeout(() => checkAuthStatus(retries - 1), 1000);
+      } else {
+        setIsAuthenticated(false);
+      }
+    }
   };
 
   const handleLogout = () => {
@@ -402,17 +468,19 @@ function App() {
   }
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="/*"
-          element={
-            isAuthenticated ? <ChatApp onLogout={handleLogout} /> : <Navigate to="/login" replace />
-          }
-        />
-      </Routes>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/*"
+            element={
+              isAuthenticated ? <ChatApp onLogout={handleLogout} /> : <Navigate to="/login" replace />
+            }
+          />
+        </Routes>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

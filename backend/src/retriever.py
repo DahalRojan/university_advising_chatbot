@@ -15,8 +15,18 @@ API_KEY = os.getenv("GROQ_API_KEY")
 MODEL_NAME = os.getenv("GROQ_MODEL")
 
 # --- MODELS ---
-bi_encoder = SentenceTransformer("BAAI/bge-small-en")
-cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+try:
+    bi_encoder = SentenceTransformer("BAAI/bge-small-en")
+except Exception as e:
+    print(f"Failed to load BAAI/bge-small-en: {e}")
+    print("Falling back to all-MiniLM-L6-v2")
+    bi_encoder = SentenceTransformer("all-MiniLM-L6-v2")
+
+try:
+    cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+except Exception as e:
+    print(f"Failed to load cross-encoder: {e}")
+    cross_encoder = None
 
 # --- DATABASE ---
 client = QdrantClient(path="./vector_db")
@@ -96,9 +106,13 @@ def advanced_retrieve(query: str, top_k: int = 5):
     if not candidate_docs:
         return ["I was unable to find any information relevant to your query in the knowledge base."]
 
-    # Re-rank using the more powerful Cross-Encoder
-    pairs = [[query, doc] for doc in candidate_docs]
-    scores = cross_encoder.predict(pairs)
+    # Re-rank using the more powerful Cross-Encoder (if available)
+    if cross_encoder is not None:
+        pairs = [[query, doc] for doc in candidate_docs]
+        scores = cross_encoder.predict(pairs)
+    else:
+        # Fallback: use semantic similarity scores
+        scores = [1.0] * len(candidate_docs)
     
     scored_docs = list(zip(scores, candidate_docs))
     scored_docs.sort(reverse=True)

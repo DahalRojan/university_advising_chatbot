@@ -24,5 +24,4 @@ backend/data/processed/*
 
 # Environment
 .env
-Dockerfile
 .dockerignore

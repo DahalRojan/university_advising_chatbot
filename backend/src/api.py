@@ -23,11 +23,17 @@ required_env_vars = {
     'SESSION_SECRET': os.getenv("SESSION_SECRET", "supersecret")
 }
 
-missing_vars = [key for key, value in required_env_vars.items() if not value]
+missing_vars = [key for key, value in required_env_vars.items() if not value and key != 'SESSION_SECRET']
 if missing_vars:
-    raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+    print(f"Warning: Missing environment variables: {', '.join(missing_vars)}")
+    print("OAuth features will be disabled until these are provided.")
 
 app = FastAPI()
+
+# Health check endpoint for Cloud Run
+@app.get("/health")
+async def health():
+    return {"status": "healthy"}
 
 # Frontend URL configuration
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")

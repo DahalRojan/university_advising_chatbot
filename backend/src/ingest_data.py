@@ -42,7 +42,12 @@ def ingest():
     """
     Processes, chunks, and embeds text documents into a Qdrant vector database.
     """
-    model = SentenceTransformer("BAAI/bge-small-en")
+    try:
+        model = SentenceTransformer("BAAI/bge-small-en")
+    except Exception as e:
+        print(f"Failed to load BAAI/bge-small-en: {e}")
+        print("Falling back to all-MiniLM-L6-v2")
+        model = SentenceTransformer("all-MiniLM-L6-v2")
     client = QdrantClient(path="./vector_db")
 
     # Use a sophisticated, context-aware text splitter

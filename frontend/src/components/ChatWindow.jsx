@@ -1,19 +1,22 @@
-import React, { useEffect, useRef } from 'react';
-import { CornerDownRight } from 'lucide-react';
+import React, { useEffect, useRef, memo } from 'react';
+import { CornerDownRight, RefreshCw, AlertCircle } from 'lucide-react';
 import { ChatLoader } from './LoadingSpinner';
 
-function ChatWindow({ messages, isLoading, scrollToBottom = true }) {
+function ChatWindow({ messages, isLoading, scrollToBottom = true, onRetryMessage }) {
   const chatEndRef = useRef(null);
   const chatContainerRef = useRef(null);
 
   useEffect(() => {
-    if (scrollToBottom) {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      // When loading historical messages, scroll to top
-      if (chatContainerRef.current && messages.length > 0) {
-        chatContainerRef.current.scrollTop = 0;
-      }
+    if (scrollToBottom && chatEndRef.current) {
+      // For new messages, scroll to bottom
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    } else if (!scrollToBottom && chatContainerRef.current && messages.length > 0) {
+      // For history conversations, start at the top but allow full scrolling
+      setTimeout(() => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = 0;
+        }
+      }, 50);
     }
   }, [messages, isLoading, scrollToBottom]);
 
@@ -88,8 +91,15 @@ function ChatWindow({ messages, isLoading, scrollToBottom = true }) {
 
 
   return (
-    <div className="flex-1 overflow-hidden flex flex-col">
-      <div ref={chatContainerRef} className="flex-1 p-4 md:p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+    <div className="flex-1 flex flex-col h-full">
+      <div 
+        ref={chatContainerRef} 
+        className="flex-1 p-4 md:p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 hover:scrollbar-thumb-gray-500 scrollbar-track-gray-100 scroll-smooth"
+        style={{ height: '100%', minHeight: '0' }}
+        role="log"
+        aria-live="polite"
+        aria-label="Chat conversation"
+      >
         {messages.length === 0 && !isLoading ? (
           <WelcomeScreen />
         ) : (
@@ -125,6 +135,17 @@ function ChatWindow({ messages, isLoading, scrollToBottom = true }) {
               >
                 <div className="relative">
                   {msg.sender === 'bot' ? renderStructuredResponse(msg.rawText) : <p className="text-sm md:text-base leading-relaxed">{msg.text}</p>}
+                  {msg.isError && onRetryMessage && (
+                    <div className="mt-3 pt-3 border-t border-red-200">
+                      <button
+                        onClick={() => onRetryMessage(index)}
+                        className="flex items-center text-xs text-red-700 hover:text-red-800 font-medium transition-colors duration-200"
+                      >
+                        <RefreshCw className="w-3 h-3 mr-1" />
+                        Try Again
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -149,4 +170,4 @@ function ChatWindow({ messages, isLoading, scrollToBottom = true }) {
   );
 }
 
-export default ChatWindow;
+export default memo(ChatWindow);

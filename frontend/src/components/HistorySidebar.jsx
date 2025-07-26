@@ -13,7 +13,7 @@ function HistorySidebar({
   isLoadingSessions = false,
 }) {
   return (
-    <div className="w-80 bg-gradient-to-b from-gray-50 to-white h-full p-4 flex flex-col border-r border-gray-100 shadow-xl">
+    <div className="w-72 bg-gradient-to-b from-gray-50 to-white h-full p-3 flex flex-col border-r border-gray-100 shadow-xl">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-gradient-to-br from-red-800 to-red-900 rounded-xl flex items-center justify-center shadow-lg shadow-red-800/25">
@@ -35,9 +35,9 @@ function HistorySidebar({
       </div>
       <button
         onClick={onNewConversation}
-        className="group flex items-center justify-center w-full mb-6 px-4 py-3.5 bg-gradient-to-r from-red-800 to-red-900 text-white rounded-2xl hover:from-red-900 hover:to-red-800 transition-all duration-200 font-semibold shadow-lg shadow-red-800/25 hover:shadow-red-800/40 hover:scale-[1.02] transform"
+        className="group flex items-center justify-center w-full mb-4 px-3 py-2.5 bg-gradient-to-r from-red-800 to-red-900 text-white rounded-xl hover:from-red-900 hover:to-red-800 transition-all duration-200 font-medium text-sm shadow-lg shadow-red-800/25 hover:shadow-red-800/40 hover:scale-[1.02] transform"
       >
-        <NewChatIcon className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform duration-200" />
+        <NewChatIcon className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
         New Chat
       </button>
       <div className="flex-1 overflow-y-auto -mr-2 pr-2">
@@ -87,7 +87,7 @@ function HistorySidebar({
             No past conversations.
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {conversations.map((conv) => {
               const isServerConversation = conv.isFromServer;
               
@@ -116,27 +116,27 @@ function HistorySidebar({
                 <div
                   key={conv.id}
                   onClick={() => onSelectConversation(conv.id)}
-                  className={`group relative p-4 rounded-2xl transition-all duration-300 cursor-pointer backdrop-blur-sm ${
+                  className={`group relative p-3 rounded-xl transition-all duration-300 cursor-pointer backdrop-blur-sm ${
                     currentConversationId === conv.id
                       ? 'bg-gradient-to-r from-red-50 to-red-100 text-red-800 border border-red-300 shadow-lg shadow-red-800/10 scale-[1.02] ring-2 ring-red-300'
                       : 'bg-white/60 hover:bg-white/80 hover:shadow-lg hover:shadow-gray-200/50 border border-gray-100/50 hover:scale-[1.01] hover:ring-1 hover:ring-gray-200'
                   }`}
                 >
-                  <div className="flex items-start space-x-3">
-                    <div className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center shadow-sm ${
+                  <div className="flex items-start space-x-2.5">
+                    <div className={`w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center shadow-sm ${
                       currentConversationId === conv.id
                         ? 'bg-gradient-to-br from-red-800 to-red-900 text-white shadow-red-800/25'
                         : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600'
                     }`}>
-                      <MessageCircle className="w-4 h-4" />
+                      <MessageCircle className="w-3 h-3" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate mb-1">
+                      <p className="text-xs font-medium truncate mb-0.5">
                         {displayTitle}
                       </p>
                       {timeAgo && (
                         <div className="flex items-center text-xs text-gray-500">
-                          <Clock className="w-3 h-3 mr-1.5" />
+                          <Clock className="w-3 h-3 mr-1" />
                           {timeAgo}
                         </div>
                       )}
@@ -146,14 +146,14 @@ function HistorySidebar({
                         e.stopPropagation();
                         onDeleteConversation(conv.id);
                       }}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-xl hover:bg-red-100 hover:text-red-800 transition-all duration-200 flex-shrink-0 hover:scale-110"
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-red-100 hover:text-red-800 transition-all duration-200 flex-shrink-0 hover:scale-110"
                       title="Delete conversation"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
                   {/* Subtle gradient border effect */}
-                  <div className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${
+                  <div className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${
                     currentConversationId !== conv.id ? 'bg-gradient-to-r from-red-800/5 to-red-900/5' : ''
                   }`} />
                 </div>
