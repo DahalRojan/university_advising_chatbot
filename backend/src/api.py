@@ -63,10 +63,9 @@ app.add_middleware(
 app.add_middleware(
     SessionMiddleware, 
     secret_key=required_env_vars['SESSION_SECRET'],
-    max_age=86400,  # 24 hour session
-    same_site='lax',  # Allow cross-site requests for OAuth
-    https_only=True,  # Use HTTPS cookies in production
-    path="/"  # Cookie path
+    max_age=None,  # Session expires when browser closes
+    same_site='none',  # Required for cross-site requests in some browsers
+    https_only=True  # Use HTTPS cookies in production
 )
 
 # OAuth configuration
@@ -367,6 +366,7 @@ async def check_collection_status():
 @app.get("/{path:path}")
 async def serve_spa_routes(path: str):
     """Serve frontend for all non-API routes (SPA routing)"""
+    # Serve frontend for all non-API routes
     if os.path.exists("./frontend/dist/index.html"):
         return FileResponse("./frontend/dist/index.html")
     return {"message": "Frontend not found - API only mode"}

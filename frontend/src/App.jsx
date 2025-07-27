@@ -425,6 +425,9 @@ function App() {
       const response = await fetch(`${CONFIG.API_BASE_URL}/auth/status`, {
         method: "GET",
         credentials: "include",
+        headers: {
+          'Cache-Control': 'no-cache'
+        },
         timeout: 10000, // 10 second timeout
       });
       
@@ -433,7 +436,14 @@ function App() {
       }
       
       const data = await response.json();
+      console.log('Auth check result:', data);
       setIsAuthenticated(data.authenticated);
+      
+      // Store auth state in localStorage for faster loading
+      localStorage.setItem('authState', JSON.stringify({
+        authenticated: data.authenticated,
+        timestamp: Date.now()
+      }));
     } catch (error) {
       console.error('Auth check failed:', error);
       
@@ -442,6 +452,7 @@ function App() {
         setTimeout(() => checkAuthStatus(retries - 1), 1000);
       } else {
         setIsAuthenticated(false);
+        localStorage.removeItem('authState');
       }
     }
   };
@@ -458,9 +469,25 @@ function App() {
     if (urlParams.get('auth') === 'success') {
       // Remove the parameter from URL
       window.history.replaceState({}, document.title, window.location.pathname);
+      setIsAuthenticated(true);
+      return;
     }
     
-    // Check authentication status
+    // Try to get cached auth state first (for faster loading)
+    const cachedAuth = localStorage.getItem('authState');
+    if (cachedAuth) {
+      try {
+        const authData = JSON.parse(cachedAuth);
+        // Use cached state if less than 5 minutes old
+        if (Date.now() - authData.timestamp < 300000) {
+          setIsAuthenticated(authData.authenticated);
+        }
+      } catch (e) {
+        localStorage.removeItem('authState');
+      }
+    }
+    
+    // Always verify with server
     checkAuthStatus();
   }, []);
 
