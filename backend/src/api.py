@@ -66,9 +66,7 @@ app.add_middleware(
     max_age=86400,  # 24 hour session
     same_site='lax',  # Allow cross-site requests for OAuth
     https_only=True,  # Use HTTPS cookies in production
-    domain=None,  # Same domain only
-    path="/",  # Cookie path
-    httponly=True  # Prevent XSS
+    path="/"  # Cookie path
 )
 
 # OAuth configuration
