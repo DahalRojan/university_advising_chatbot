@@ -63,10 +63,12 @@ app.add_middleware(
 app.add_middleware(
     SessionMiddleware, 
     secret_key=required_env_vars['SESSION_SECRET'],
-    max_age=3600,  # 1 hour session
+    max_age=86400,  # 24 hour session
     same_site='lax',  # Allow cross-site requests for OAuth
     https_only=True,  # Use HTTPS cookies in production
-    domain=None  # Same domain only
+    domain=None,  # Same domain only
+    path="/",  # Cookie path
+    httponly=True  # Prevent XSS
 )
 
 # OAuth configuration
@@ -302,9 +304,15 @@ async def logout(request: Request):
 async def auth_status(request: Request):
     """Check if user is authenticated"""
     user = request.session.get('user')
+    session_data = dict(request.session)
+    
+    print(f"Auth status check - Session data: {session_data}")
+    print(f"Auth status check - User: {user}")
+    print(f"Auth status check - Session ID exists: {bool(request.session)}")
+    
     if user:
-        return {"authenticated": True, "user": user}
-    return {"authenticated": False}
+        return {"authenticated": True, "user": user, "debug": {"session_keys": list(session_data.keys())}}
+    return {"authenticated": False, "debug": {"session_data": session_data, "session_exists": bool(request.session)}}
 
 @app.get("/test/config")
 async def test_config():
