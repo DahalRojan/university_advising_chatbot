@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, LogOut, ChevronDown } from 'lucide-react';
 import LoadingSpinner from './LoadingSpinner';
+import { CONFIG } from '../config/constants';
 
 const UserProfile = ({ onLogout }) => {
   const [user, setUser] = useState(null);
@@ -13,7 +14,7 @@ const UserProfile = ({ onLogout }) => {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await fetch(`${window.location.origin}/user/profile`, {
+      const response = await fetch(`${CONFIG.API_BASE_URL}/user/profile`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -30,7 +31,7 @@ const UserProfile = ({ onLogout }) => {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${window.location.origin}/logout`, {
+      await fetch(`${CONFIG.API_BASE_URL}/logout`, {
         method: 'POST',
         credentials: 'include',
       });

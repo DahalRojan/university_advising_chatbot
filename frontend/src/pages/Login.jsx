@@ -1,9 +1,11 @@
 import React from "react";
 import { CheckCircle, MessageCircle, Calendar, GraduationCap, BookOpen, Users } from 'lucide-react';
 
+import { CONFIG } from '../config/constants';
+
 const Login = () => {
   const handleLogin = () => {
-    window.location.href = `${window.location.origin}/login`;
+    window.location.href = `${CONFIG.API_BASE_URL}/login`;
   };
 
   const features = [

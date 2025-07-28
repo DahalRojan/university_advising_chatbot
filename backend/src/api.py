@@ -53,19 +53,22 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL, "http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[FRONTEND_URL, "http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Add session middleware (required for Authlib)
+# Detect if running locally
+is_local = os.getenv("ENVIRONMENT", "development").lower() == "development" or os.getenv("PORT") != "8080"
+
 app.add_middleware(
     SessionMiddleware, 
     secret_key=required_env_vars['SESSION_SECRET'],
     max_age=None,  # Session expires when browser closes
-    same_site='none',  # Required for cross-site requests in some browsers
-    https_only=True  # Use HTTPS cookies in production
+    same_site='lax' if is_local else 'none',  # Use 'lax' for localhost, 'none' for cross-site
+    https_only=not is_local  # Only require HTTPS in production
 )
 
 # OAuth configuration
@@ -122,8 +125,17 @@ class ChatResponse(BaseModel):
 
 @app.get('/login')
 async def login(request: Request):
-    # Force HTTPS for Cloud Run
-    redirect_uri = str(request.url_for('auth')).replace('http://', 'https://')
+    # Only force HTTPS in production, keep HTTP for localhost
+    redirect_uri = str(request.url_for('auth'))
+    print(f"DEBUG: Original redirect_uri: {redirect_uri}")
+    print(f"DEBUG: Request hostname: {request.url.hostname}")
+    
+    if request.url.hostname not in ['localhost', '127.0.0.1']:
+        redirect_uri = redirect_uri.replace('http://', 'https://')
+        print(f"DEBUG: Changed to HTTPS: {redirect_uri}")
+    else:
+        print(f"DEBUG: Keeping HTTP for localhost: {redirect_uri}")
+    
     return await oauth.azure.authorize_redirect(request, redirect_uri)
 
 @app.get('/auth')
@@ -148,7 +160,7 @@ async def auth(request: Request):
                 'client_secret': CLIENT_SECRET,
                 'code': code,
                 'grant_type': 'authorization_code',
-                'redirect_uri': str(request.url_for('auth')).replace('http://', 'https://'),
+                'redirect_uri': str(request.url_for('auth')) if request.url.hostname in ['localhost', '127.0.0.1'] else str(request.url_for('auth')).replace('http://', 'https://'),
                 'scope': 'openid profile email User.Read'
             }
             
@@ -296,6 +308,12 @@ async def logout(request: Request):
     """Logout user by clearing session"""
     request.session.clear()
     return {"message": "Logged out successfully"}
+
+@app.get("/clear-session")
+async def clear_session(request: Request):
+    """Force clear all session data"""
+    request.session.clear()
+    return {"message": "Session completely cleared", "session_data": dict(request.session)}
 
 @app.get("/auth/status")
 async def auth_status(request: Request):

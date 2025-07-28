@@ -1,7 +1,7 @@
 // Production configuration constants
 export const CONFIG = {
   // API Configuration
-  API_BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:8000',
+  API_BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   API_TIMEOUT: 30000, // 30 seconds
   
   // Chat Configuration  
@@ -25,7 +25,7 @@ export const CONFIG = {
     voiceInput: false,
     darkMode: false,
     exportChat: true,
-    analytics: process.env.NODE_ENV === 'production'
+    analytics: import.meta.env.MODE === 'production'
   },
   
   // Error Messages
@@ -47,8 +47,8 @@ export const CONFIG = {
 };
 
 // Environment-specific overrides
-if (process.env.NODE_ENV === 'production') {
-  CONFIG.API_BASE_URL = process.env.REACT_APP_API_URL || window.location.origin;
+if (import.meta.env.MODE === 'production') {
+  CONFIG.API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
 }
 
 export default CONFIG;
