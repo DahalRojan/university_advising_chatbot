@@ -98,14 +98,27 @@ print(f"   - FRONTEND_URL: {FRONTEND_URL}")
 print(f"   - same_site: {'lax' if is_local else 'none'}")
 print(f"   - https_only: {not is_local}")
 
+# Configure cookie domain for cross-origin requests
+cookie_domain = None
+if not is_local and FRONTEND_URL:
+    from urllib.parse import urlparse
+    parsed_url = urlparse(FRONTEND_URL)
+    # For Cloudflare Pages, use the base domain to allow cross-subdomain cookies
+    if 'pages.dev' in parsed_url.netloc:
+        cookie_domain = '.pages.dev'
+    else:
+        cookie_domain = parsed_url.netloc
+
+print(f"🍪 Cookie domain configuration: {cookie_domain}")
+
 app.add_middleware(
     SessionMiddleware, 
     secret_key=required_env_vars['SESSION_SECRET'],
-    max_age=None,  # Session expires when browser closes
-    same_site='lax' if is_local else 'none',  # Use 'lax' for localhost, 'none' for cross-site
-    https_only=not is_local,  # Only require HTTPS in production
-    path="/",  # Ensure cookies work across all paths
-    domain=None  # Let browser determine domain automatically
+    max_age=3600,  # 1 hour session timeout for security
+    same_site='none' if not is_local else 'lax',  # 'none' required for cross-site
+    https_only=not is_local,  # Only HTTPS in production
+    path="/",  # All paths
+    domain=cookie_domain  # Explicit domain for cross-origin cookies
 )
 
 # OAuth configuration
