@@ -8,8 +8,22 @@ const Login = () => {
     const loginUrl = `${CONFIG.API_BASE_URL}/login`;
     console.log('Redirecting to login URL:', loginUrl);
     console.log('CONFIG.API_BASE_URL:', CONFIG.API_BASE_URL);
-    // Use replace to force full page navigation and bypass React Router
-    window.location.replace(loginUrl);
+    console.log('Environment:', import.meta.env.MODE);
+    console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
+    
+    // First, try a simple fetch test to see if backend is reachable
+    fetch(`${CONFIG.API_BASE_URL}/health`)
+      .then(response => {
+        console.log('Backend health check status:', response.status);
+        console.log('Backend health check OK - proceeding with login redirect');
+        // Use replace to force full page navigation and bypass React Router
+        window.location.replace(loginUrl);
+      })
+      .catch(error => {
+        console.error('Backend health check failed:', error);
+        console.log('Trying login redirect anyway...');
+        window.location.replace(loginUrl);
+      });
   };
 
   const features = [
