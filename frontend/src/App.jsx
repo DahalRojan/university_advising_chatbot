@@ -422,7 +422,11 @@ function App() {
 
   const checkAuthStatus = async (retries = 3) => {
     try {
-      const response = await fetch(`${CONFIG.API_BASE_URL}/auth/status`, {
+      const authUrl = `${CONFIG.API_BASE_URL}/auth/status`;
+      console.log('🔍 Checking auth status at:', authUrl);
+      console.log('🌐 Frontend origin:', window.location.origin);
+      
+      const response = await fetch(authUrl, {
         method: "GET",
         credentials: "include",
         headers: {
@@ -430,6 +434,8 @@ function App() {
         },
         timeout: 10000, // 10 second timeout
       });
+      
+      console.log('📡 Auth status response:', response.status, response.statusText);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
