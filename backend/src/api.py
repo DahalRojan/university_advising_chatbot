@@ -92,7 +92,11 @@ is_local = (
     FRONTEND_URL.startswith("http://127.0.0.1")
 )
 
-print(f"Session middleware configuration - is_local: {is_local}, FRONTEND_URL: {FRONTEND_URL}")
+print(f"🍪 Session middleware configuration:")
+print(f"   - is_local: {is_local}")
+print(f"   - FRONTEND_URL: {FRONTEND_URL}")
+print(f"   - same_site: {'lax' if is_local else 'none'}")
+print(f"   - https_only: {not is_local}")
 
 app.add_middleware(
     SessionMiddleware, 
@@ -100,7 +104,8 @@ app.add_middleware(
     max_age=None,  # Session expires when browser closes
     same_site='lax' if is_local else 'none',  # Use 'lax' for localhost, 'none' for cross-site
     https_only=not is_local,  # Only require HTTPS in production
-    path="/"  # Ensure cookies work across all paths
+    path="/",  # Ensure cookies work across all paths
+    domain=None  # Let browser determine domain automatically
 )
 
 # OAuth configuration
