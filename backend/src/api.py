@@ -303,6 +303,18 @@ async def get_user_profile(request: Request, user: dict = Depends(get_current_us
         "email": user["email"]
     }
 
+@app.get("/auth/status")
+async def auth_status(request: Request):
+    """Check if user is authenticated"""
+    user = request.session.get('user')
+    print(f"Auth status check - session data: {dict(request.session)}")
+    print(f"Auth status check - user: {user}")
+    
+    if user:
+        return {"authenticated": True, "user": user}
+    else:
+        return {"authenticated": False}
+
 @app.post("/logout")
 async def logout(request: Request):
     """Logout user by clearing session"""
