@@ -21,11 +21,14 @@ COPY data/ ./data/
 COPY configs/ ./configs/
 COPY run_chatbot.py .
 
+# Copy the populated vector database (knowledge base)
+COPY vector_db/ ./vector_db/
+
+# Copy embeddings metadata if it exists
+COPY embeddings/ ./embeddings/
+
 # Verify the correct run_chatbot.py is copied
 RUN echo "Checking run_chatbot.py content:" && cat run_chatbot.py
-
-# Create necessary directories
-RUN mkdir -p vector_db embeddings
 
 # Set environment variables
 ENV PYTHONPATH=/app
