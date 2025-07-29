@@ -5,7 +5,10 @@ import { CONFIG } from '../config/constants';
 
 const Login = () => {
   const handleLogin = () => {
-    window.location.href = `${CONFIG.API_BASE_URL}/login`;
+    const loginUrl = `${CONFIG.API_BASE_URL}/login`;
+    console.log('Redirecting to login URL:', loginUrl);
+    console.log('CONFIG.API_BASE_URL:', CONFIG.API_BASE_URL);
+    window.location.href = loginUrl;
   };
 
   const features = [
