@@ -14,13 +14,27 @@ const UserProfile = ({ onLogout }) => {
 
   const fetchUserProfile = async () => {
     try {
+      console.log('👤 Fetching user profile from:', `${CONFIG.API_BASE_URL}/user/profile`);
+      const token = localStorage.getItem('jwt_token');
+      const headers = {};
+      
+      // Add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`${CONFIG.API_BASE_URL}/user/profile`, {
         method: 'GET',
-        credentials: 'include',
+        headers: headers,
       });
+      console.log('👤 User profile response:', response.status, response.statusText);
+      
       if (response.ok) {
         const userData = await response.json();
+        console.log('👤 User profile data:', userData);
         setUser(userData);
+      } else {
+        console.error('👤 User profile fetch failed:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('Failed to fetch user profile:', error);

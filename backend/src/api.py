@@ -1,5 +1,7 @@
 import os
 import uuid
+import jwt
+import datetime
 from fastapi import FastAPI, Request, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -8,6 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from .llm_chain import ask_llm
 from .retriever import advanced_retrieve
 from .conversation_db import create_table, add_message, get_history, get_user_sessions, update_session_summary, get_session_summary, delete_conversation
@@ -130,6 +133,39 @@ OAUTH_METADATA_URL = f"https://login.microsoftonline.com/{TENANT_ID}/v2.0/.well-
 # Initialize conversation database
 create_table()
 
+# JWT Configuration
+JWT_SECRET = required_env_vars['SESSION_SECRET']  # Reuse session secret for JWT
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_HOURS = 24
+
+# JWT Security
+security = HTTPBearer(auto_error=False)
+
+def create_jwt_token(user_data: dict) -> str:
+    """Create JWT token for user"""
+    payload = {
+        "user_id": user_data["id"],
+        "name": user_data["name"],
+        "email": user_data["email"],
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=JWT_EXPIRATION_HOURS),
+        "iat": datetime.datetime.utcnow(),
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def verify_jwt_token(token: str) -> dict:
+    """Verify and decode JWT token"""
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return {
+            "id": payload["user_id"],
+            "name": payload["name"],
+            "email": payload["email"]
+        }
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
 # OAuth setup - Modified for multi-tenant support
 oauth = OAuth()
 
@@ -251,31 +287,35 @@ async def auth(request: Request):
         return RedirectResponse(url=f"{FRONTEND_URL}/login?error=auth_failed")
     
     try:
-        # Save user info in session
-        request.session['user'] = {
+        # Create user data for JWT
+        user_data = {
             "id": user['oid'],
             "name": user.get('name', ''),
             "email": user.get('email', user.get('preferred_username', ''))
         }
-        print(f"User session saved: {request.session['user']['email']}")
-        return RedirectResponse(url=f"{FRONTEND_URL}?auth=success")
+        
+        # Create JWT token
+        jwt_token = create_jwt_token(user_data)
+        print(f"🔑 JWT token created for user: {user_data['email']}")
+        
+        # Redirect to frontend with JWT token in query parameter
+        return RedirectResponse(url=f"{FRONTEND_URL}?auth=success&token={jwt_token}")
     except Exception as e:
-        print(f"Error saving user session: {e}")
-        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=session_failed")
+        print(f"Error creating JWT token: {e}")
+        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=token_failed")
 
-def get_current_user(request: Request):
-    user = request.session.get('user')
-    print(f"🔐 Auth check - Session data: {dict(request.session)}")
-    print(f"🔐 Auth check - User from session: {user}")
-    print(f"🔐 Auth check - Session ID: {request.session.get('_session_id', 'No session ID')}")
-    print(f"🔐 Auth check - Request cookies: {dict(request.cookies)}")
-    
-    if not user:
-        print("❌ No user found in session - raising 401")
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if not credentials:
+        print("❌ No Authorization header found")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
     
-    print(f"✅ User authenticated: {user.get('email', 'No email')}")
-    return user
+    try:
+        user = verify_jwt_token(credentials.credentials)
+        print(f"✅ JWT user authenticated: {user.get('email', 'No email')}")
+        return user
+    except HTTPException as e:
+        print(f"❌ JWT verification failed: {e.detail}")
+        raise e
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(chat_request: ChatRequest, request: Request, user: dict = Depends(get_current_user)):
@@ -349,8 +389,23 @@ async def delete_chat_session(session_id: str, request: Request, user: dict = De
     else:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
+@app.get("/auth/status")
+async def auth_status(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Check if user is authenticated via JWT token"""
+    if not credentials:
+        print("🔍 Auth status check - No token provided")
+        return {"authenticated": False}
+    
+    try:
+        user = verify_jwt_token(credentials.credentials)
+        print(f"🔍 Auth status check - User authenticated: {user.get('email', 'No email')}")
+        return {"authenticated": True, "user": user}
+    except HTTPException:
+        print("🔍 Auth status check - Invalid/expired token")
+        return {"authenticated": False}
+
 @app.get("/user/profile")
-async def get_user_profile(request: Request, user: dict = Depends(get_current_user)):
+async def get_user_profile(user: dict = Depends(get_current_user)):
     """Get authenticated user's profile information"""
     return {
         "id": user["id"],

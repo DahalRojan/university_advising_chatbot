@@ -38,9 +38,17 @@ function ChatApp({ onLogout }) {
     setIsLoadingSessions(true);
     try {
       // First, try to load from server
+      const token = localStorage.getItem('jwt_token');
+      const headers = {};
+      
+      // Add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`${CONFIG.API_BASE_URL}/user/sessions`, {
         method: 'GET',
-        credentials: 'include',
+        headers: headers,
       });
       
       if (response.ok) {
@@ -109,10 +117,17 @@ function ChatApp({ onLogout }) {
     setCurrentConversationId(conversationId);
 
     try {
+      const token = localStorage.getItem('jwt_token');
+      const headers = { 'Content-Type': 'application/json' };
+      
+      // Add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`${CONFIG.API_BASE_URL}/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: headers,
         body: JSON.stringify({
           session_id: sessionId,
           message: messageText
@@ -225,9 +240,17 @@ function ChatApp({ onLogout }) {
       if (conversation.isFromServer && (!conversation.messages || conversation.messages.length === 0)) {
         setIsLoading(true);
         try {
+          const token = localStorage.getItem('jwt_token');
+          const headers = {};
+          
+          // Add Authorization header if token exists
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+          
           const response = await fetch(`${CONFIG.API_BASE_URL}/chat/${id}/history`, {
             method: 'GET',
-            credentials: 'include',
+            headers: headers,
           });
           
           if (response.ok) {
@@ -281,9 +304,17 @@ function ChatApp({ onLogout }) {
 
   const deleteConversation = async (conversationId) => {
     try {
+      const token = localStorage.getItem('jwt_token');
+      const headers = {};
+      
+      // Add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`${CONFIG.API_BASE_URL}/chat/${conversationId}`, {
         method: 'DELETE',
-        credentials: 'include',
+        headers: headers,
       });
       
       if (response.ok) {
@@ -423,15 +454,23 @@ function App() {
   const checkAuthStatus = async (retries = 3) => {
     try {
       const authUrl = `${CONFIG.API_BASE_URL}/auth/status`;
+      const token = localStorage.getItem('jwt_token');
+      
       console.log('🔍 Checking auth status at:', authUrl);
-      console.log('🌐 Frontend origin:', window.location.origin);
+      console.log('🔑 Using JWT token:', token ? 'Present' : 'Missing');
+      
+      const headers = {
+        'Cache-Control': 'no-cache'
+      };
+      
+      // Add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       
       const response = await fetch(authUrl, {
         method: "GET",
-        credentials: "include",
-        headers: {
-          'Cache-Control': 'no-cache'
-        },
+        headers: headers,
         timeout: 10000, // 10 second timeout
       });
       
@@ -464,16 +503,26 @@ function App() {
   };
 
   const handleLogout = () => {
+    // Clear JWT token and auth state
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('authState');
     setIsAuthenticated(false);
+    console.log('🔑 JWT token cleared on logout');
     // Redirect to login page
     window.location.href = '/login';
   };
 
   useEffect(() => {
-    // Check for auth success parameter
+    // Check for auth success parameter and JWT token
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('auth') === 'success') {
-      // Remove the parameter from URL
+      const token = urlParams.get('token');
+      if (token) {
+        // Store JWT token in localStorage
+        localStorage.setItem('jwt_token', token);
+        console.log('🔑 JWT token stored successfully');
+      }
+      // Remove the parameters from URL
       window.history.replaceState({}, document.title, window.location.pathname);
       setIsAuthenticated(true);
       return;
