@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
-import Login from "./pages/Login";
+import Login from "./pages/Login.jsx";
 import ChatWindow from './components/ChatWindow';
 import ChatInput from './components/ChatInput';
 import HistorySidebar from './components/HistorySidebar';
