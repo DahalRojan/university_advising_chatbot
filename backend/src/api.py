@@ -247,11 +247,16 @@ async def auth(request: Request):
 
 def get_current_user(request: Request):
     user = request.session.get('user')
-    print(f"Session data: {dict(request.session)}")
-    print(f"User from session: {user}")
+    print(f"🔐 Auth check - Session data: {dict(request.session)}")
+    print(f"🔐 Auth check - User from session: {user}")
+    print(f"🔐 Auth check - Session ID: {request.session.get('_session_id', 'No session ID')}")
+    print(f"🔐 Auth check - Request cookies: {dict(request.cookies)}")
+    
     if not user:
-        print("No user found in session - raising 401")
+        print("❌ No user found in session - raising 401")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    
+    print(f"✅ User authenticated: {user.get('email', 'No email')}")
     return user
 
 @app.post("/chat", response_model=ChatResponse)
