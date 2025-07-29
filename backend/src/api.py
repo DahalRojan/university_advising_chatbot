@@ -51,24 +51,56 @@ async def serve_frontend_root():
 # Frontend URL configuration
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
+# Configure CORS origins - include both development and production URLs
+cors_origins = [
+    "http://localhost:5173", 
+    "http://localhost:5174", 
+    "http://127.0.0.1:5173", 
+    "http://127.0.0.1:5174"
+]
+
+# Add production frontend URL if provided
+if FRONTEND_URL and FRONTEND_URL not in cors_origins:
+    cors_origins.append(FRONTEND_URL)
+
+# Add common Cloudflare Pages patterns for production deployment
+if FRONTEND_URL and not FRONTEND_URL.startswith("http://localhost") and not FRONTEND_URL.startswith("http://127.0.0.1"):
+    # Add .pages.dev variants to handle different deployment URLs
+    if ".pages.dev" not in FRONTEND_URL:
+        base_name = FRONTEND_URL.replace("https://", "").replace("http://", "").split(".")[0]
+        cors_origins.append(f"https://{base_name}.pages.dev")
+
+# Always add the actual Cloudflare Pages URL
+cors_origins.append("https://university-advising-chatbot.pages.dev")
+
+print(f"CORS origins configured: {cors_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL, "http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Add session middleware (required for Authlib)
-# Detect if running locally
-is_local = os.getenv("ENVIRONMENT", "development").lower() == "development" or os.getenv("PORT") != "8080"
+# Detect if running locally - check multiple indicators
+is_local = (
+    os.getenv("ENVIRONMENT", "development").lower() == "development" or 
+    os.getenv("PORT") != "8080" or
+    FRONTEND_URL.startswith("http://localhost") or
+    FRONTEND_URL.startswith("http://127.0.0.1")
+)
+
+print(f"Session middleware configuration - is_local: {is_local}, FRONTEND_URL: {FRONTEND_URL}")
 
 app.add_middleware(
     SessionMiddleware, 
     secret_key=required_env_vars['SESSION_SECRET'],
     max_age=None,  # Session expires when browser closes
     same_site='lax' if is_local else 'none',  # Use 'lax' for localhost, 'none' for cross-site
-    https_only=not is_local  # Only require HTTPS in production
+    https_only=not is_local,  # Only require HTTPS in production
+    path="/"  # Ensure cookies work across all paths
 )
 
 # OAuth configuration
@@ -302,18 +334,6 @@ async def get_user_profile(request: Request, user: dict = Depends(get_current_us
         "name": user["name"],
         "email": user["email"]
     }
-
-@app.get("/auth/status")
-async def auth_status(request: Request):
-    """Check if user is authenticated"""
-    user = request.session.get('user')
-    print(f"Auth status check - session data: {dict(request.session)}")
-    print(f"Auth status check - user: {user}")
-    
-    if user:
-        return {"authenticated": True, "user": user}
-    else:
-        return {"authenticated": False}
 
 @app.post("/logout")
 async def logout(request: Request):
