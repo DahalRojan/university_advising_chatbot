@@ -21,6 +21,9 @@ COPY data/ ./data/
 COPY configs/ ./configs/
 COPY run_chatbot.py .
 
+# Verify the correct run_chatbot.py is copied
+RUN echo "Checking run_chatbot.py content:" && cat run_chatbot.py
+
 # Create necessary directories
 RUN mkdir -p vector_db embeddings
 
