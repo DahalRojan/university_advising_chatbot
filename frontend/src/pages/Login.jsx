@@ -8,7 +8,8 @@ const Login = () => {
     const loginUrl = `${CONFIG.API_BASE_URL}/login`;
     console.log('Redirecting to login URL:', loginUrl);
     console.log('CONFIG.API_BASE_URL:', CONFIG.API_BASE_URL);
-    window.location.href = loginUrl;
+    // Use replace to force full page navigation and bypass React Router
+    window.location.replace(loginUrl);
   };
 
   const features = [
