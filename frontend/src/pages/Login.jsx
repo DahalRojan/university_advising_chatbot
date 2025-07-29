@@ -6,24 +6,14 @@ import { CONFIG } from '../config/constants';
 const Login = () => {
   const handleLogin = () => {
     const loginUrl = `${CONFIG.API_BASE_URL}/login`;
-    console.log('Redirecting to login URL:', loginUrl);
+    console.log('🚀 Attempting redirect to backend login URL:', loginUrl);
     console.log('CONFIG.API_BASE_URL:', CONFIG.API_BASE_URL);
     console.log('Environment:', import.meta.env.MODE);
     console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
     
-    // First, try a simple fetch test to see if backend is reachable
-    fetch(`${CONFIG.API_BASE_URL}/health`)
-      .then(response => {
-        console.log('Backend health check status:', response.status);
-        console.log('Backend health check OK - proceeding with login redirect');
-        // Use replace to force full page navigation and bypass React Router
-        window.location.replace(loginUrl);
-      })
-      .catch(error => {
-        console.error('Backend health check failed:', error);
-        console.log('Trying login redirect anyway...');
-        window.location.replace(loginUrl);
-      });
+    // Force full page navigation by directly setting window.location
+    console.log('🔄 Executing window.location redirect...');
+    window.location.href = loginUrl;
   };
 
   const features = [
