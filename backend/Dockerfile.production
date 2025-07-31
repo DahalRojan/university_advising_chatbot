@@ -24,12 +24,8 @@ COPY run_chatbot.py .
 # Verify the correct run_chatbot.py is copied
 RUN echo "Checking run_chatbot.py content:" && cat run_chatbot.py
 
-# Create necessary directories
-RUN mkdir -p vector_db embeddings
-
-# Build vector database from data during deployment
-RUN python -c "import sys; sys.path.append('/app'); print('Starting vector database ingestion...'); \
-from src.ingest_data import ingest; ingest(); print('✅ Vector database built successfully')"
+# Create necessary directories (no vector_db needed for cloud)
+RUN mkdir -p embeddings
 
 # Set environment variables
 ENV PYTHONPATH=/app

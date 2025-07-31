@@ -29,29 +29,31 @@ except Exception as e:
     cross_encoder = None
 
 # --- DATABASE ---
-client = QdrantClient(path="./vector_db")
+# Qdrant Cloud Configuration
+CLUSTER_URL = os.getenv("QDRANT_CLOUD_URL")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+
+# Validate required environment variables
+if not CLUSTER_URL:
+    raise ValueError("QDRANT_CLOUD_URL environment variable is required")
+if not QDRANT_API_KEY:
+    raise ValueError("QDRANT_API_KEY environment variable is required")
+
+# Connect to Qdrant Cloud
+client = QdrantClient(url=CLUSTER_URL, api_key=QDRANT_API_KEY)
 COLLECTION = "student_docs"
 
-# Auto-initialize collection if it doesn't exist
-def ensure_collection_exists():
-    """Ensure the Qdrant collection exists, create if missing."""
-    try:
-        collection_names = [c.name for c in client.get_collections().collections]
-        if COLLECTION not in collection_names:
-            print(f"Creating missing collection: {COLLECTION}")
-            from qdrant_client.http.models import VectorParams, Distance
-            client.recreate_collection(
-                collection_name=COLLECTION,
-                vectors_config=VectorParams(size=384, distance=Distance.COSINE)
-            )
-            print(f"✅ Collection {COLLECTION} created successfully")
-        else:
-            print(f"✅ Collection {COLLECTION} already exists")
-    except Exception as e:
-        print(f"❌ Error ensuring collection exists: {e}")
-
-# Initialize collection on import
-ensure_collection_exists()
+# Verify connection to Qdrant Cloud
+try:
+    collections = client.get_collections()
+    collection_names = [c.name for c in collections.collections]
+    if COLLECTION in collection_names:
+        collection_info = client.get_collection(COLLECTION)
+        print(f"✅ Connected to Qdrant Cloud - Collection has {collection_info.points_count} documents")
+    else:
+        print(f"❌ Collection '{COLLECTION}' not found in Qdrant Cloud")
+except Exception as e:
+    print(f"❌ Failed to connect to Qdrant Cloud: {e}")
 
 def extract_keywords(query: str) -> list[str]:
     """
@@ -106,25 +108,34 @@ def advanced_retrieve(query: str, top_k: int = 5):
         limit=top_k * 2
     )
     
-    # Keyword search results
+    # Keyword search results - temporarily disabled due to missing text index
     keyword_hits = []
-    if keywords:
-        # Create a filter that requires all keywords to be present
-        must_clauses = [models.FieldCondition(key="text", match=models.MatchText(text=kw)) for kw in keywords]
-        keyword_filter = models.Filter(must=must_clauses)
-        
-        keyword_hits = client.scroll(
-            collection_name=COLLECTION,
-            scroll_filter=keyword_filter,
-            limit=top_k * 2
-        )[0] # scroll returns a tuple (points, next_page_offset)
+    # TODO: Re-enable keyword filtering after creating text index in Qdrant Cloud
+    # if keywords:
+    #     # Create a filter that requires all keywords to be present
+    #     must_clauses = [models.FieldCondition(key="text", match=models.MatchText(text=kw)) for kw in keywords]
+    #     keyword_filter = models.Filter(must=must_clauses)
+    #     
+    #     keyword_hits = client.scroll(
+    #         collection_name=COLLECTION,
+    #         scroll_filter=keyword_filter,
+    #         limit=top_k * 2
+    #     )[0] # scroll returns a tuple (points, next_page_offset)
 
     # 4. Merge and Re-rank
     # Combine results and remove duplicates
     all_hits = {hit.id: hit for hit in semantic_hits + keyword_hits}.values()
     candidate_docs = [hit.payload["text"] for hit in all_hits]
 
+    print(f"🔍 Search debug:")
+    print(f"   Query: {query}")
+    print(f"   Keywords extracted: {keywords}")
+    print(f"   Semantic hits: {len(semantic_hits)}")
+    print(f"   Keyword hits: {len(keyword_hits)}")
+    print(f"   Total candidate docs: {len(candidate_docs)}")
+    
     if not candidate_docs:
+        print("❌ No candidate documents found")
         return ["I was unable to find any information relevant to your query in the knowledge base."]
 
     # Re-rank using the more powerful Cross-Encoder (if available)

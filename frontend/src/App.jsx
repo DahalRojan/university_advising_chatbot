@@ -521,11 +521,17 @@ function App() {
         // Store JWT token in localStorage
         localStorage.setItem('jwt_token', token);
         console.log('🔑 JWT token stored successfully');
+        
+        // Store auth state in localStorage immediately
+        localStorage.setItem('authState', JSON.stringify({
+          authenticated: true,
+          timestamp: Date.now()
+        }));
       }
       // Remove the parameters from URL
       window.history.replaceState({}, document.title, window.location.pathname);
       setIsAuthenticated(true);
-      return;
+      return; // Don't call checkAuthStatus after successful auth
     }
     
     // Try to get cached auth state first (for faster loading)
@@ -536,13 +542,15 @@ function App() {
         // Use cached state if less than 5 minutes old
         if (Date.now() - authData.timestamp < 300000) {
           setIsAuthenticated(authData.authenticated);
+          // If we have recent cached auth, don't need to verify immediately
+          return;
         }
       } catch (e) {
         localStorage.removeItem('authState');
       }
     }
     
-    // Always verify with server
+    // Only verify with server if no recent cached auth or successful redirect
     checkAuthStatus();
   }, []);
 

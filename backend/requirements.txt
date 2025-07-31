@@ -19,3 +19,6 @@ itsdangerous
 httpx
 PyMuPDF
 PyJWT
+pinecone
+psycopg2-binary
+sqlalchemy

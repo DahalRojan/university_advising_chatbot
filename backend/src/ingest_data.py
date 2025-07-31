@@ -7,6 +7,20 @@ from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import PointStruct, VectorParams, Distance
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "../configs/.env"))
+
+# Qdrant Cloud Configuration
+CLUSTER_URL = os.getenv("QDRANT_CLOUD_URL")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+
+# Validate required environment variables
+if not CLUSTER_URL:
+    raise ValueError("QDRANT_CLOUD_URL environment variable is required")
+if not QDRANT_API_KEY:
+    raise ValueError("QDRANT_API_KEY environment variable is required")
 
 QDRANT_COLLECTION = "student_docs"
 PROCESSED_DIR = "data/processed"
@@ -48,7 +62,7 @@ def ingest():
         print(f"Failed to load BAAI/bge-small-en: {e}")
         print("Falling back to all-MiniLM-L6-v2")
         model = SentenceTransformer("all-MiniLM-L6-v2")
-    client = QdrantClient(path="./vector_db")
+    client = QdrantClient(url=CLUSTER_URL, api_key=QDRANT_API_KEY)
 
     # Use a sophisticated, context-aware text splitter
     text_splitter = RecursiveCharacterTextSplitter(
@@ -58,13 +72,15 @@ def ingest():
         add_start_index=True,
     )
 
-    # Ensure the Qdrant collection exists
+    # Verify Qdrant Cloud collection exists
     collection_names = [c.name for c in client.get_collections().collections]
     if QDRANT_COLLECTION not in collection_names:
-        client.recreate_collection(
-            collection_name=QDRANT_COLLECTION,
-            vectors_config=VectorParams(size=384, distance=Distance.COSINE)
-        )
+        print(f"❌ Collection '{QDRANT_COLLECTION}' not found in Qdrant Cloud")
+        print("💡 Please create the collection first or use the cloud ingestion script")
+        return
+    else:
+        collection_info = client.get_collection(QDRANT_COLLECTION)
+        print(f"✅ Using Qdrant Cloud collection with {collection_info.points_count} existing documents")
 
     metadata = load_metadata()
     existing_hashes = {m["hash"] for m in metadata}
