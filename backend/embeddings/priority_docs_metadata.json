@@ -1,0 +1,51 @@
+[
+  {
+    "filename": "GannonUniversity-AcademicCalendar.txt",
+    "hash": "ef1a0a4661b0c02c40cee6948901fa79",
+    "embedded_on": "2025-08-17T00:41:40.315862",
+    "chunks_count": 9,
+    "document_type": "priority_university_doc"
+  },
+  {
+    "filename": "GannonUniversity-FinancialAid.txt",
+    "hash": "13cf7a62eea4893f5a8d0d395c02feba",
+    "embedded_on": "2025-08-17T00:41:41.025723",
+    "chunks_count": 7,
+    "document_type": "priority_university_doc"
+  },
+  {
+    "filename": "GannonUniversity-TransferChecklist_00001.txt",
+    "hash": "8392014ca4d632bcbc5908c0fb17e0a4",
+    "embedded_on": "2025-08-17T00:41:41.633463",
+    "chunks_count": 6,
+    "document_type": "priority_university_doc"
+  },
+  {
+    "filename": "GannonUniversity-CampusSafety.txt",
+    "hash": "8c167b94696267ea998e3aebc0188b3e",
+    "embedded_on": "2025-08-17T00:41:42.479182",
+    "chunks_count": 10,
+    "document_type": "priority_university_doc"
+  },
+  {
+    "filename": "GannonUniversity-Accreditation_00001.txt",
+    "hash": "6414cf823a12c894eec477d7b91212d0",
+    "embedded_on": "2025-08-17T00:41:43.188668",
+    "chunks_count": 8,
+    "document_type": "priority_university_doc"
+  },
+  {
+    "filename": "GannonUniversity-EthicsPoint_00001.txt",
+    "hash": "6c940fd46a193559dc4f339f8d88b392",
+    "embedded_on": "2025-08-17T00:41:43.717906",
+    "chunks_count": 7,
+    "document_type": "priority_university_doc"
+  },
+  {
+    "filename": "GannonUniversity-RetentionRate.txt",
+    "hash": "b9fb2e4b3cbfadf5c75f893008b4755a",
+    "embedded_on": "2025-08-17T00:41:48.407157",
+    "chunks_count": 37,
+    "document_type": "priority_university_doc"
+  }
+]

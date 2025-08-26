@@ -406,74 +406,61 @@ const OnboardingWizard = ({ onComplete, onClose }) => {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-red-800/3 rounded-full blur-3xl"></div>
       </div>
       
-      <div className="bg-white/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col relative">
-        {/* Header with glassy effect */}
-        <div className="border-b border-gray-100/50 p-6 bg-white/40 backdrop-blur-sm">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-2 bg-white/80 rounded-xl shadow-sm">
+      <div className="bg-white/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden flex flex-col relative">
+        {/* Compact Header */}
+        <div className="border-b border-gray-100/50 p-3 bg-white/40 backdrop-blur-sm">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-3">
+              <div className="p-1.5 bg-white/80 rounded-lg shadow-sm">
                 <img
                   src="https://upload.wikimedia.org/wikipedia/commons/4/49/Gannon_university_logo.png"
                   alt="Gannon University Logo"
-                  className="w-8 h-8"
+                  className="w-6 h-6"
                 />
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-red-800 to-red-700 bg-clip-text text-transparent">
+                <h1 className="text-lg font-bold bg-gradient-to-r from-red-800 to-red-700 bg-clip-text text-transparent">
                   Academic Advisor Setup
                 </h1>
-                <p className="text-sm text-gray-600">Complete your profile to get personalized guidance</p>
+                <p className="text-xs text-gray-600">Step {currentStep + 1} of {totalSteps} • {progressPercentage}% Complete</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
               <button
                 onClick={handleSkipOnboarding}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-white/50 rounded-lg transition-all duration-200 backdrop-blur-sm font-medium"
+                className="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-800 hover:bg-white/50 rounded-md transition-all duration-200 backdrop-blur-sm font-medium"
                 title="Skip setup and go to chat"
               >
-                Skip Setup
+                Skip
               </button>
               {onClose && (
                 <button
                   onClick={onClose}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-white/50 rounded-xl transition-all duration-200 backdrop-blur-sm"
+                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-white/50 rounded-lg transition-all duration-200 backdrop-blur-sm"
                   title="Close"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
           </div>
 
-          {/* Progress Bar with glassy design */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between text-sm mb-3">
-              <span className="text-gray-700 font-medium">Setup Progress</span>
-              <span className="font-bold text-red-800 bg-red-50/80 px-3 py-1 rounded-full">
-                {progressPercentage}% Complete
-              </span>
-            </div>
+          {/* Compact Progress Bar */}
+          <div className="mb-3">
             <div className="relative">
-              <div className="w-full bg-gray-100/70 backdrop-blur-sm rounded-full h-3 shadow-inner">
+              <div className="w-full bg-gray-100/70 backdrop-blur-sm rounded-full h-2 shadow-inner">
                 <div 
-                  className="bg-gradient-to-r from-red-800 via-red-700 to-red-600 h-3 rounded-full transition-all duration-700 ease-out shadow-sm relative overflow-hidden"
+                  className="bg-gradient-to-r from-red-800 via-red-700 to-red-600 h-2 rounded-full transition-all duration-700 ease-out shadow-sm relative overflow-hidden"
                   style={{ width: `${progressPercentage}%` }}
                 >
                   <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
-              <span>Step {currentStep + 1} of {totalSteps}</span>
-              <span className="flex items-center space-x-1">
-                <Clock className="w-3 h-3" />
-                <span>~{currentStepData?.estimated_time_minutes || 0} min</span>
-              </span>
-            </div>
           </div>
 
-          {/* Steps Navigation with glassy design */}
-          <div className="flex items-center justify-between px-2">
+          {/* Horizontal Compact Steps Navigation */}
+          <div className="flex items-center justify-between px-1">
             {workingSteps.map((step, index) => {
               const IconComponent = stepIcons[step.step_name] || Circle;
               const isActive = index === currentStep;
@@ -484,23 +471,23 @@ const OnboardingWizard = ({ onComplete, onClose }) => {
                   key={step.step_name}
                   className={`flex items-center ${index < workingSteps.length - 1 ? 'flex-1' : ''}`}
                 >
-                  <div className="flex flex-col items-center">
+                  <div className="flex items-center space-x-1">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm transition-all duration-300 shadow-sm ${
+                      className={`w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-sm transition-all duration-300 shadow-sm ${
                         isCompleted
                           ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-green-200'
                           : isActive
-                          ? 'bg-gradient-to-r from-red-800 to-red-700 text-white shadow-red-200 ring-2 ring-red-200'
+                          ? 'bg-gradient-to-r from-red-800 to-red-700 text-white shadow-red-200 ring-1 ring-red-200'
                           : 'bg-white/60 text-gray-500 border border-gray-200/50'
                       }`}
                     >
                       {isCompleted ? (
-                        <CheckCircle className="w-5 h-5" />
+                        <CheckCircle className="w-3 h-3" />
                       ) : (
-                        <IconComponent className="w-5 h-5" />
+                        <IconComponent className="w-3 h-3" />
                       )}
                     </div>
-                    <span className={`text-xs mt-2 text-center max-w-20 leading-tight font-medium ${
+                    <span className={`text-xs font-medium ${
                       isActive 
                         ? 'text-red-800' 
                         : isCompleted 
@@ -511,8 +498,8 @@ const OnboardingWizard = ({ onComplete, onClose }) => {
                     </span>
                   </div>
                   {index < workingSteps.length - 1 && (
-                    <div className="flex-1 flex items-center px-3">
-                      <div className={`w-full h-1 rounded-full transition-all duration-500 ${
+                    <div className="flex-1 flex items-center px-2">
+                      <div className={`w-full h-0.5 rounded-full transition-all duration-500 ${
                         isCompleted 
                           ? 'bg-gradient-to-r from-green-400 to-green-500 shadow-sm' 
                           : 'bg-gray-200/70'
@@ -525,30 +512,28 @@ const OnboardingWizard = ({ onComplete, onClose }) => {
           </div>
         </div>
 
-        {/* Step Content with glassy background */}
-        <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-white/20 to-white/40 backdrop-blur-sm">
-          <div className="max-w-2xl mx-auto">
-            <div className="mb-8">
-              <div className="mb-4">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  {currentStepData.display_name}
-                </h2>
-                {currentStepData.description && (
-                  <p className="text-gray-600 leading-relaxed">
-                    {currentStepData.description}
-                  </p>
-                )}
-              </div>
+        {/* Maximized Content Area */}
+        <div className="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-white/20 to-white/40 backdrop-blur-sm">
+          <div className="w-full max-w-full">
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-gray-900 mb-1">
+                {currentStepData.display_name}
+              </h2>
+              {currentStepData.description && (
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {currentStepData.description}
+                </p>
+              )}
             </div>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50/80 backdrop-blur-sm border border-red-200/50 rounded-xl shadow-sm">
-                <p className="text-red-700 font-medium">{error}</p>
+              <div className="mb-4 p-3 bg-red-50/80 backdrop-blur-sm border border-red-200/50 rounded-lg shadow-sm">
+                <p className="text-red-700 font-medium text-sm">{error}</p>
               </div>
             )}
 
-            {/* Step Component */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-white/30 shadow-sm p-6">
+            {/* Step Component - Full Width */}
+            <div className="bg-white/60 backdrop-blur-sm rounded-lg border border-white/30 shadow-sm p-4">
               {StepComponent ? (
                 <StepComponent
                   studentData={studentData}
@@ -568,35 +553,34 @@ const OnboardingWizard = ({ onComplete, onClose }) => {
           </div>
         </div>
 
-        {/* Footer with glassy design */}
-        <div className="border-t border-gray-100/50 p-6 bg-white/40 backdrop-blur-sm">
-          <div className="flex items-center justify-between max-w-2xl mx-auto">
+        {/* Compact Footer */}
+        <div className="border-t border-gray-100/50 p-3 bg-white/40 backdrop-blur-sm">
+          <div className="flex items-center justify-between w-full">
             <button
               onClick={handlePrevious}
               disabled={currentStep === 0}
-              className={`flex items-center space-x-2 px-5 py-3 rounded-xl border backdrop-blur-sm transition-all font-medium ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg border backdrop-blur-sm transition-all font-medium text-sm ${
                 currentStep === 0
                   ? 'text-gray-400 border-gray-200/50 bg-gray-50/50 cursor-not-allowed'
                   : 'text-gray-700 border-gray-300/50 bg-white/60 hover:bg-white/80 hover:border-gray-400/50 hover:shadow-sm'
               }`}
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-3 h-3" />
               <span>Back</span>
             </button>
 
-            <div className="text-center px-4">
-              <div className="text-sm font-semibold text-gray-800">
-                {currentStepData?.display_name}
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                Step {currentStep + 1} of {totalSteps}
-              </div>
+            <div className="flex-1 text-center px-4">
+              {!canProceed() && !isSaving && (
+                <p className="text-xs text-amber-700 font-medium bg-amber-50/80 rounded-lg px-3 py-1 inline-block">
+                  {getCurrentStepRequirementMessage()}
+                </p>
+              )}
             </div>
 
             <button
               onClick={handleNext}
               disabled={!canProceed() || isSaving}
-              className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-semibold transition-all backdrop-blur-sm ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-semibold transition-all backdrop-blur-sm text-sm ${
                 canProceed() && !isSaving
                   ? 'bg-gradient-to-r from-red-800 to-red-700 text-white hover:from-red-900 hover:to-red-800 shadow-lg hover:shadow-xl transform hover:scale-[1.02]'
                   : 'bg-gray-200/60 text-gray-400 cursor-not-allowed border border-gray-200/50'
@@ -604,32 +588,22 @@ const OnboardingWizard = ({ onComplete, onClose }) => {
             >
               {isSaving ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
                   <span>Saving...</span>
                 </>
               ) : currentStep === totalSteps - 1 ? (
                 <>
-                  <span>Complete Setup</span>
-                  <CheckCircle className="w-4 h-4" />
+                  <span>Complete</span>
+                  <CheckCircle className="w-3 h-3" />
                 </>
               ) : (
                 <>
                   <span>Continue</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-3 h-3" />
                 </>
               )}
             </button>
           </div>
-          
-          {!canProceed() && !isSaving && (
-            <div className="mt-4 text-center max-w-2xl mx-auto">
-              <div className="bg-amber-50/80 backdrop-blur-sm border border-amber-200/50 rounded-xl px-4 py-3 inline-block shadow-sm">
-                <p className="text-sm text-amber-700 font-medium">
-                  {getCurrentStepRequirementMessage()}
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

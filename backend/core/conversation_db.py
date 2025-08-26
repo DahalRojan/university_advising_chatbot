@@ -17,7 +17,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is required. Please set up Cloud SQL PostgreSQL.")
 
-print("📊 Using PostgreSQL for conversations")
+print("[OK] Using PostgreSQL for conversations")
 
 def get_connection():
     """Get PostgreSQL database connection"""
@@ -25,8 +25,8 @@ def get_connection():
         conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
         return conn
     except Exception as e:
-        print(f"❌ Failed to connect to PostgreSQL: {e}")
-        print("💡 Make sure your Cloud SQL instance is running and DATABASE_URL is correct")
+        print(f"[ERROR] Failed to connect to PostgreSQL: {e}")
+        print("[INFO] Make sure your database instance is running and DATABASE_URL is correct")
         raise
 
 def create_table():
@@ -74,7 +74,7 @@ def create_table():
             ''')
             
             conn.commit()
-            print("✅ PostgreSQL tables and indexes created successfully")
+            print("[OK] PostgreSQL tables and indexes created successfully")
 
 def add_message(session_id, user_email, sender, text):
     """Add a message to the conversation"""
@@ -189,13 +189,13 @@ if __name__ == "__main__":
         add_message(test_session, test_email, "assistant", "Hello! I received your test message.")
         
         history = get_history(test_session, test_email)
-        print(f"✅ Test conversation created with {len(history)} messages")
+        print(f"[OK] Test conversation created with {len(history)} messages")
         
         sessions = get_user_sessions(test_email)
-        print(f"✅ Found {len(sessions)} sessions for test user")
+        print(f"[OK] Found {len(sessions)} sessions for test user")
         
     except Exception as e:
-        print(f"❌ Database setup failed: {e}")
+        print(f"[ERROR] Database setup failed: {e}")
         print("\n🔧 Troubleshooting:")
         print("1. Make sure Cloud SQL instance is running")
         print("2. Check DATABASE_URL format: postgresql://user:pass@host:port/dbname")

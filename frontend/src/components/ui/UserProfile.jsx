@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { User, LogOut, ChevronDown } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { User, LogOut, ChevronDown, UserCircle } from 'lucide-react';
 import LoadingSpinner from './LoadingSpinner';
-import { CONFIG } from '../config/constants';
+import StudentProfileModal from './StudentProfileModal';
+import { CONFIG } from '../../config/constants';
 
 const UserProfile = ({ onLogout }) => {
   const [user, setUser] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   useEffect(() => {
     fetchUserProfile();
@@ -54,6 +57,11 @@ const UserProfile = ({ onLogout }) => {
     } catch (error) {
       console.error('Logout failed:', error);
     }
+  };
+
+  const handleProfileClick = () => {
+    setIsDropdownOpen(false);
+    setShowProfileModal(true);
   };
 
   if (isLoading) {
@@ -106,6 +114,15 @@ const UserProfile = ({ onLogout }) => {
             </div>
           </div>
           <button
+            onClick={handleProfileClick}
+            className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-red-50 flex items-center space-x-3 transition-all duration-200 font-medium hover:text-red-900"
+          >
+            <div className="w-8 h-8 bg-red-100 rounded-xl flex items-center justify-center">
+              <UserCircle className="w-4 h-4 text-red-800" />
+            </div>
+            <span>Student Profile</span>
+          </button>
+          <button
             onClick={handleLogout}
             className="w-full px-4 py-3 text-left text-sm text-red-800 hover:bg-red-50 flex items-center space-x-3 transition-all duration-200 font-medium hover:text-red-900"
           >
@@ -123,6 +140,14 @@ const UserProfile = ({ onLogout }) => {
           className="fixed inset-0 z-40"
           onClick={() => setIsDropdownOpen(false)}
         />
+      )}
+
+      {/* Student Profile Modal - Rendered via Portal at document root */}
+      {showProfileModal && createPortal(
+        <StudentProfileModal
+          onClose={() => setShowProfileModal(false)}
+        />,
+        document.body
       )}
     </div>
   );

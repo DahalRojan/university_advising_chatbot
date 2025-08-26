@@ -230,11 +230,11 @@ class OnboardingDatabaseManager:
                     cur.execute("""
                         INSERT INTO student_profiles (
                             user_email, first_name, last_name, preferred_name,
-                            phone, student_type, academic_level, enrollment_status, primary_major,
-                            secondary_major, minor_program, concentration,
+                            phone, student_type, academic_level, enrollment_status, 
+                            degree_program, primary_major, secondary_major, minor_program, concentration,
                             expected_graduation, is_active, created_at
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         ON CONFLICT (user_email) DO UPDATE SET
                             first_name = EXCLUDED.first_name,
                             last_name = EXCLUDED.last_name,
@@ -243,6 +243,7 @@ class OnboardingDatabaseManager:
                             student_type = EXCLUDED.student_type,
                             academic_level = EXCLUDED.academic_level,
                             enrollment_status = EXCLUDED.enrollment_status,
+                            degree_program = EXCLUDED.degree_program,
                             primary_major = EXCLUDED.primary_major,
                             secondary_major = EXCLUDED.secondary_major,
                             minor_program = EXCLUDED.minor_program,
@@ -258,6 +259,7 @@ class OnboardingDatabaseManager:
                         profile_data.get('student_type'),
                         profile_data.get('academic_level'),
                         profile_data.get('enrollment_status'),
+                        profile_data.get('degree_program'),
                         profile_data.get('primary_major'),
                         profile_data.get('secondary_major'),
                         profile_data.get('minor_program'),
@@ -380,6 +382,7 @@ class OnboardingDatabaseManager:
             'enrollment_status': 'enrollment_status', 
             'student_id': 'student_id',
             'primary_major': 'primary_major',
+            'degree_program': 'degree_program',
             'expected_graduation': 'expected_graduation'
         }
         
@@ -610,9 +613,10 @@ class OnboardingDatabaseManager:
                     (CASE WHEN sp.first_name IS NOT NULL THEN 10 ELSE 0 END +
                      CASE WHEN sp.last_name IS NOT NULL THEN 10 ELSE 0 END +
                      CASE WHEN sp.student_type IS NOT NULL THEN 15 ELSE 0 END +
-                     CASE WHEN sp.academic_level IS NOT NULL THEN 15 ELSE 0 END +
-                     CASE WHEN sp.enrollment_status IS NOT NULL THEN 15 ELSE 0 END +
-                     CASE WHEN sp.primary_major IS NOT NULL THEN 15 ELSE 0 END +
+                     CASE WHEN sp.academic_level IS NOT NULL THEN 10 ELSE 0 END +
+                     CASE WHEN sp.enrollment_status IS NOT NULL THEN 10 ELSE 0 END +
+                     CASE WHEN sp.degree_program IS NOT NULL THEN 20 ELSE 0 END +
+                     CASE WHEN sp.primary_major IS NOT NULL THEN 10 ELSE 0 END +
                      CASE WHEN sp.expected_graduation IS NOT NULL THEN 10 ELSE 0 END +
                      CASE WHEN sp.phone IS NOT NULL THEN 5 ELSE 0 END +
                      CASE WHEN sp.preferred_name IS NOT NULL THEN 5 ELSE 0 END)::numeric

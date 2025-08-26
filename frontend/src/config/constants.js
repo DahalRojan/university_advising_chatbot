@@ -1,7 +1,7 @@
 // Production configuration constants
 export const CONFIG = {
   // API Configuration
-  API_BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+  API_BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
   API_TIMEOUT: 30000, // 30 seconds
   
   // Chat Configuration  

@@ -60,6 +60,7 @@ class StudentProfileRequest(BaseModel):
     enrollment_status: Optional[str] = None
     expected_graduation: Optional[datetime] = None
     
+    degree_program: Optional[str] = None
     primary_major: Optional[str] = None
     secondary_major: Optional[str] = None
     minor_program: Optional[str] = None
@@ -72,22 +73,23 @@ class StudentProfileRequest(BaseModel):
 
 class StudentProfileResponse(BaseModel):
     user_email: str
-    first_name: Optional[str]
-    last_name: Optional[str]
-    preferred_name: Optional[str]
-    expected_graduation: Optional[datetime]
-    student_type: Optional[str]
-    academic_level: Optional[str]
-    enrollment_status: Optional[str]
-    primary_major: Optional[str]
-    cumulative_gpa: Optional[float]
-    profile_completion_percentage: int
-    is_onboarding_complete: bool
-    onboarding_progress_percentage: float
-    active_recommendations_count: int
-    course_interests_count: int
-    created_at: datetime
-    updated_at: datetime
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    preferred_name: Optional[str] = None
+    expected_graduation: Optional[datetime] = None
+    student_type: Optional[str] = None
+    academic_level: Optional[str] = None
+    enrollment_status: Optional[str] = None
+    degree_program: Optional[str] = None
+    primary_major: Optional[str] = None
+    cumulative_gpa: Optional[float] = None
+    profile_completion_percentage: int = 0
+    is_onboarding_complete: bool = False
+    onboarding_progress_percentage: float = 0
+    active_recommendations_count: int = 0
+    course_interests_count: int = 0
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 class AcademicGoalRequest(BaseModel):
     goal_type: str = Field(description="Type: career, academic, skill, personal")
@@ -204,6 +206,15 @@ class OnboardingAPI:
             # Auto-populate missing first_name and last_name from Microsoft login if available
             if user_data and user_data.get('name') and (not dashboard_data.get('first_name') or not dashboard_data.get('last_name')):
                 self._auto_populate_name_from_microsoft(user_email, user_data.get('name'), dashboard_data)
+            
+            # Migrate degree_program from onboarding if missing
+            if not dashboard_data.get('degree_program'):
+                logger.info(f"No degree_program found for {user_email}, checking onboarding data...")
+                migrated = self.migrate_onboarding_academic_info_to_profile(user_email)
+                if migrated:
+                    logger.info(f"Successfully migrated academic info from onboarding for {user_email}")
+                    # Refresh dashboard data
+                    dashboard_data = self.db_manager.get_student_dashboard_data(user_email)
             
             return StudentProfileResponse(**dashboard_data)
         except Exception as e:
@@ -414,10 +425,199 @@ class OnboardingAPI:
                                 goal[key] = value.isoformat()
                         goals.append(goal)
                     
+                    # If no structured goals found, try to migrate from onboarding data
+                    if not goals:
+                        logger.info(f"No structured goals found for {user_email}, checking onboarding data...")
+                        migrated = self.migrate_onboarding_interests_to_goals(user_email)
+                        if migrated:
+                            logger.info(f"Successfully migrated onboarding interests to goals for {user_email}")
+                            # Recursively call to get the newly created goals
+                            return self.get_student_academic_goals(user_email)
+                    
                     return goals
         except Exception as e:
             logger.error(f"Failed to get academic goals for {user_email}: {e}")
             raise HTTPException(status_code=500, detail="Failed to retrieve academic goals")
+
+    def migrate_onboarding_interests_to_goals(self, user_email: str) -> bool:
+        """Convert onboarding academic interests to structured academic goals"""
+        try:
+            with self.db_manager.get_connection() as conn:
+                with conn.cursor() as cur:
+                    # Get onboarding data from academic goals steps
+                    cur.execute("""
+                        SELECT data_json FROM student_onboarding_progress 
+                        WHERE student_email = %s 
+                        AND step_name IN ('current_goals', 'prospective_goals', 'academic_goals')
+                        AND data_json IS NOT NULL
+                        ORDER BY created_at DESC
+                        LIMIT 1
+                    """, (user_email,))
+                    
+                    onboarding_data = cur.fetchone()
+                    if not onboarding_data or not onboarding_data['data_json']:
+                        logger.info(f"No onboarding academic interests data found for {user_email}")
+                        return False
+                    
+                    data = onboarding_data['data_json']
+                    logger.info(f"Found onboarding data for {user_email}: {data}")
+                    
+                    # Extract interests arrays
+                    academic_interests = data.get('academic_interests', [])
+                    career_goals = data.get('career_goals', [])
+                    other_interests = data.get('other_interests', [])
+                    
+                    goals_created = 0
+                    now = datetime.utcnow()
+                    
+                    # Convert academic interests to academic goals
+                    for interest in academic_interests:
+                        if interest and interest.strip():
+                            cur.execute("""
+                                INSERT INTO student_academic_goals (
+                                    student_email, goal_type, goal_category, goal_description,
+                                    priority_level, created_at, updated_at
+                                )
+                                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            """, (
+                                user_email,
+                                'academic',
+                                'Academic Interest',
+                                interest.strip(),
+                                7,  # medium-high priority
+                                now,
+                                now
+                            ))
+                            goals_created += 1
+                    
+                    # Convert career goals to career goals
+                    for goal in career_goals:
+                        if goal and goal.strip():
+                            cur.execute("""
+                                INSERT INTO student_academic_goals (
+                                    student_email, goal_type, goal_category, goal_description,
+                                    priority_level, created_at, updated_at
+                                )
+                                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            """, (
+                                user_email,
+                                'career',
+                                'Career Goal',
+                                goal.strip(),
+                                8,  # high priority
+                                now,
+                                now
+                            ))
+                            goals_created += 1
+                    
+                    # Convert other interests to personal goals
+                    for interest in other_interests:
+                        if interest and interest.strip():
+                            cur.execute("""
+                                INSERT INTO student_academic_goals (
+                                    student_email, goal_type, goal_category, goal_description,
+                                    priority_level, created_at, updated_at
+                                )
+                                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            """, (
+                                user_email,
+                                'personal',
+                                'Personal Interest',
+                                interest.strip(),
+                                5,  # medium priority
+                                now,
+                                now
+                            ))
+                            goals_created += 1
+                    
+                    logger.info(f"Created {goals_created} academic goals from onboarding data for {user_email}")
+                    return goals_created > 0
+                    
+        except Exception as e:
+            logger.error(f"Failed to migrate onboarding interests to goals for {user_email}: {e}")
+            return False
+
+    def migrate_onboarding_academic_info_to_profile(self, user_email: str) -> bool:
+        """Migrate academic info (degree_program, etc.) from onboarding data to student profile"""
+        try:
+            with self.db_manager.get_connection() as conn:
+                with conn.cursor() as cur:
+                    # Get onboarding data from academic_info step
+                    cur.execute("""
+                        SELECT data_json FROM student_onboarding_progress 
+                        WHERE student_email = %s 
+                        AND step_name = 'academic_info'
+                        AND data_json IS NOT NULL
+                        ORDER BY created_at DESC
+                        LIMIT 1
+                    """, (user_email,))
+                    
+                    onboarding_data = cur.fetchone()
+                    if not onboarding_data or not onboarding_data['data_json']:
+                        logger.info(f"No onboarding academic_info data found for {user_email}")
+                        return False
+                    
+                    data = onboarding_data['data_json']
+                    logger.info(f"Found onboarding academic_info data for {user_email}: {data}")
+                    
+                    # Extract academic info fields
+                    updates = []
+                    values = []
+                    
+                    # Map data fields to database columns (same as _transfer_academic_info_data)
+                    field_mapping = {
+                        'academic_level': 'academic_level',
+                        'enrollment_status': 'enrollment_status',
+                        'student_id': 'student_id', 
+                        'primary_major': 'primary_major',
+                        'degree_program': 'degree_program',
+                        'expected_graduation': 'expected_graduation'
+                    }
+                    
+                    for data_key, db_column in field_mapping.items():
+                        if data_key in data and data[data_key]:
+                            logger.info(f"Processing field {data_key}: {data[data_key]}")
+                            if data_key == 'expected_graduation' and data[data_key] != '':
+                                try:
+                                    # Handle date conversion
+                                    date_value = datetime.fromisoformat(data[data_key].replace('Z', '+00:00'))
+                                    updates.append(f"{db_column} = %s")
+                                    values.append(date_value)
+                                    logger.info(f"Added date field {data_key}")
+                                except Exception as e:
+                                    logger.error(f"Failed to convert date for {data_key}: {e}")
+                                    continue
+                            elif data[data_key] != '':
+                                updates.append(f"{db_column} = %s")
+                                values.append(data[data_key])
+                                logger.info(f"Added field {data_key}: {data[data_key]}")
+                        else:
+                            logger.info(f"Skipping field {data_key}: not in data or empty")
+                    
+                    if updates:
+                        # Add updated_at
+                        updates.append("updated_at = %s")
+                        values.append(datetime.utcnow())
+                        values.append(user_email)  # for WHERE clause
+                        
+                        query = f"UPDATE student_profiles SET {', '.join(updates)} WHERE user_email = %s"
+                        logger.info(f"Executing query: {query}")
+                        logger.info(f"With values: {values}")
+                        
+                        cur.execute(query, values)
+                        rows_affected = cur.rowcount
+                        
+                        logger.info(f"Migration completed for {user_email}. Rows affected: {rows_affected}")
+                        return rows_affected > 0
+                    else:
+                        logger.info(f"No updates to perform for {user_email}")
+                        return False
+                    
+                    return False
+                    
+        except Exception as e:
+            logger.error(f"Failed to migrate onboarding academic info for {user_email}: {e}")
+            return False
 
     def get_student_academic_history(self, user_email: str) -> List[Dict]:
         """Get student's academic history (completed and enrolled courses)"""

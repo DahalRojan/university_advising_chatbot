@@ -55,9 +55,8 @@ COPY backend/ ./backend/
 # Copy built frontend from frontend-build stage
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 
-# Copy configuration files (create .env from example if missing)
-COPY backend/configs/ ./backend/configs/
-RUN if [ ! -f ./backend/configs/.env ]; then cp ./backend/configs/.env.example ./backend/configs/.env; fi
+# Copy configuration files 
+COPY backend/config/ ./backend/config/
 
 # Create necessary directories and set permissions
 RUN mkdir -p /app/backend/vector_db /app/backend/embeddings /app/backend/data && \
@@ -87,4 +86,4 @@ ENV GROQ_API_URL="https://api.groq.com/openai/v1/chat/completions"
 ENV GROQ_MODEL="llama3-70b-8192"
 
 # Start the application with dynamic port binding
-CMD ["sh", "-c", "python -m uvicorn backend.src.api:app --host 0.0.0.0 --port ${PORT:-8080}"]
+CMD ["sh", "-c", "cd backend && python run_chatbot.py"]

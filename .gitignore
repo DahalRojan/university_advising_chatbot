@@ -22,6 +22,17 @@ backend/data/processed/*
 .vscode/
 *.log
 
-# Environment
+# Environment - CRITICAL: Never commit secrets!
 .env
+.env.local
+.env.production
+.env.staging
+backend/config/.env
+backend/configs/.env
+*.env
 .dockerignore
+
+# API Keys and Secrets
+api_keys.txt
+secrets/
+credentials/

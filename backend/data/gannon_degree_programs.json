@@ -1,0 +1,150 @@
+{
+  "gannon_degree_programs": {
+    "doctoral": [
+      "Doctor of Nursing Practice (DNP)",
+      "Doctor of Physical Therapy (DPT)"
+    ],
+    "masters": [
+      "Master of Business Administration (MBA)",
+      "Master of Business Administration in Business Analytics",
+      "Master of Science in Applied Exercise Physiology",
+      "Master of Athletic Training (MAT)",
+      "Master of Science in Biomedical Engineering",
+      "Master of Science in Clinical Mental Health Counseling",
+      "Master of Science in Computer and Information Science - Data Science",
+      "Master of Science in Computer and Information Science - Information Technology",
+      "Master of Science in Computer and Information Science - Software Engineering",
+      "Master of Science in Criminalistics (MSC)",
+      "Master of Education (MEd)",
+      "Master of Science in Electrical Engineering",
+      "Master of Science in Embedded Software Engineering",
+      "Master of Science in Engineering Management",
+      "Master of Science in Environmental Science and Management",
+      "Master of Science in Nursing (MSN)",
+      "Master of Healthcare Administration",
+      "Master of Science in Mechanical Engineering (MSME)",
+      "Master of Physician Assistant Science (MPAS)",
+      "Master of Public Administration (MPA)",
+      "Master of Science in Speech and Language Pathology",
+      "Master of Arts in Strategic Communication"
+    ],
+    "bachelors": [
+      "Bachelor of Arts in Business Studies",
+      "Bachelor of Science in Accounting",
+      "Bachelor of Science in Aviation & Business Management",
+      "Bachelor of Science in Economics (STEM Designated)",
+      "Bachelor of Science in Finance",
+      "Bachelor of Science in Management",
+      "Bachelor of Science in Marketing",
+      "Bachelor of Science in Sport Business",
+      "Bachelor of Science in Business Administration",
+      "Bachelor of Science in Biomedical Engineering",
+      "Bachelor of Science in Computer Science",
+      "Bachelor of Science in Cyber Engineering",
+      "Bachelor of Science in Cybersecurity",
+      "Bachelor of Science in Electrical Engineering",
+      "Bachelor of Science in Environmental Science",
+      "Bachelor of Science in Environmental Engineering",
+      "Bachelor of Science in Industrial and Robotics Engineering",
+      "Bachelor of Science in Mechanical Engineering",
+      "Bachelor of Science in Software Engineering",
+      "Bachelor of Science in Applied Intelligence",
+      "Bachelor of Arts in Advertising Communication",
+      "Bachelor of Arts in Criminal Justice",
+      "Bachelor of Arts in Digital Media Communication",
+      "Bachelor of Arts in English",
+      "Bachelor of Arts in Global Languages",
+      "Bachelor of Science in Nursing",
+      "Bachelor of Science in Health Sciences",
+      "Bachelor of Arts in Psychology",
+      "Bachelor of Arts in History"
+    ]
+  },
+  "program_categories": {
+    "business": {
+      "masters": [
+        "Master of Business Administration (MBA)",
+        "Master of Business Administration in Business Analytics",
+        "Master of Healthcare Administration",
+        "Master of Public Administration (MPA)"
+      ],
+      "bachelors": [
+        "Bachelor of Arts in Business Studies",
+        "Bachelor of Science in Accounting",
+        "Bachelor of Science in Aviation & Business Management",
+        "Bachelor of Science in Economics (STEM Designated)",
+        "Bachelor of Science in Finance",
+        "Bachelor of Science in Management",
+        "Bachelor of Science in Marketing",
+        "Bachelor of Science in Sport Business",
+        "Bachelor of Science in Business Administration"
+      ]
+    },
+    "computer_science_engineering": {
+      "masters": [
+        "Master of Science in Computer and Information Science - Data Science",
+        "Master of Science in Computer and Information Science - Information Technology",
+        "Master of Science in Computer and Information Science - Software Engineering",
+        "Master of Science in Electrical Engineering",
+        "Master of Science in Embedded Software Engineering",
+        "Master of Science in Engineering Management",
+        "Master of Science in Biomedical Engineering",
+        "Master of Science in Mechanical Engineering (MSME)"
+      ],
+      "bachelors": [
+        "Bachelor of Science in Computer Science",
+        "Bachelor of Science in Cyber Engineering",
+        "Bachelor of Science in Cybersecurity",
+        "Bachelor of Science in Electrical Engineering",
+        "Bachelor of Science in Environmental Engineering",
+        "Bachelor of Science in Industrial and Robotics Engineering",
+        "Bachelor of Science in Mechanical Engineering",
+        "Bachelor of Science in Software Engineering",
+        "Bachelor of Science in Biomedical Engineering",
+        "Bachelor of Science in Applied Intelligence"
+      ]
+    },
+    "health_sciences": {
+      "doctoral": [
+        "Doctor of Nursing Practice (DNP)",
+        "Doctor of Physical Therapy (DPT)"
+      ],
+      "masters": [
+        "Master of Science in Applied Exercise Physiology",
+        "Master of Athletic Training (MAT)",
+        "Master of Science in Nursing (MSN)",
+        "Master of Physician Assistant Science (MPAS)",
+        "Master of Science in Speech and Language Pathology"
+      ],
+      "bachelors": [
+        "Bachelor of Science in Nursing",
+        "Bachelor of Science in Health Sciences"
+      ]
+    },
+    "liberal_arts": {
+      "masters": [
+        "Master of Education (MEd)",
+        "Master of Science in Clinical Mental Health Counseling",
+        "Master of Arts in Strategic Communication"
+      ],
+      "bachelors": [
+        "Bachelor of Arts in Advertising Communication",
+        "Bachelor of Arts in Criminal Justice",
+        "Bachelor of Arts in Digital Media Communication",
+        "Bachelor of Arts in English",
+        "Bachelor of Arts in Global Languages",
+        "Bachelor of Arts in Psychology",
+        "Bachelor of Arts in History"
+      ]
+    },
+    "science": {
+      "masters": [
+        "Master of Science in Environmental Science and Management",
+        "Master of Science in Criminalistics (MSC)"
+      ],
+      "bachelors": [
+        "Bachelor of Science in Environmental Science"
+      ]
+    }
+  }
+}

@@ -1,18 +1,104 @@
+@import url('https://rsms.me/inter/inter.css');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html, body, #root {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  font-family: 'Inter', sans-serif;
+/* Typography base styles */
+@layer base {
+  html {
+    font-feature-settings: 'cv11', 'ss01';
+    font-variation-settings: 'opsz' 32;
+  }
+  
+  html, body, #root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: 'Inter var', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #1e293b;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Only hide overflow on the chat app, not globally */
+  .chat-app-container {
+    overflow: hidden;
+  }
+
+  /* Improved text rendering */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
 }
 
-@supports (font-variation-settings: normal) {
-  html, body, #root { font-family: 'Inter var', sans-serif; }
+/* Typography component styles */
+@layer components {
+  /* Headings */
+  .heading-xl {
+    @apply text-3xl font-bold tracking-tight text-slate-800;
+  }
+  
+  .heading-lg {
+    @apply text-2xl font-semibold tracking-tight text-slate-800;
+  }
+  
+  .heading-md {
+    @apply text-xl font-semibold tracking-tight text-slate-800;
+  }
+  
+  .heading-sm {
+    @apply text-lg font-medium tracking-normal text-slate-800;
+  }
+  
+  /* Body text */
+  .body-lg {
+    @apply text-lg font-normal leading-relaxed text-slate-700;
+  }
+  
+  .body-md {
+    @apply text-base font-normal leading-relaxed text-slate-700;
+  }
+  
+  .body-sm {
+    @apply text-sm font-normal leading-normal text-slate-600;
+  }
+  
+  /* Interactive text */
+  .text-interactive {
+    @apply text-red-800 font-medium hover:text-primary-800 transition-colors duration-200;
+  }
+  
+  /* Chat specific typography */
+  .chat-message {
+    @apply text-base leading-relaxed font-normal;
+  }
+  
+  .chat-user-message {
+    @apply chat-message text-slate-800;
+  }
+  
+  .chat-assistant-message {
+    @apply chat-message text-slate-700;
+  }
+  
+  /* Button typography */
+  .btn-text {
+    @apply font-medium tracking-wide;
+  }
+  
+  /* Form typography */
+  .form-label {
+    @apply text-sm font-medium text-slate-700;
+  }
+  
+  .form-input {
+    @apply text-base font-normal text-slate-900 placeholder:text-slate-400;
+  }
 }
 
 /* Custom scrollbar styling for better visibility */
@@ -62,4 +148,66 @@ html, body, #root {
 /* Chat expansion animation */
 .chat-expand {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Login page specific utilities */
+@layer utilities {
+  .pb-safe {
+    padding-bottom: max(2rem, env(safe-area-inset-bottom));
+  }
+  
+  .pt-safe {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  /* Override the global overflow for login page */
+  .login-page {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    height: 100%;
+    width: 100%;
+  }
+  
+  /* Prevent viewport zoom on iOS when focusing inputs */
+  @media screen and (max-width: 768px) {
+    input[type="text"],
+    input[type="email"], 
+    input[type="password"] {
+      font-size: 16px;
+    }
+  }
+  
+  /* Dynamic viewport height support */
+  .min-h-screen-safe {
+    min-height: 100vh;
+    min-height: calc(var(--vh, 1vh) * 100);
+  }
+  
+  .h-screen-safe {
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
+  }
+  
+  /* Container utilities for proper spacing */
+  .container-safe {
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  @media (min-width: 640px) {
+    .container-safe {
+      max-width: 640px;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .container-safe {
+      max-width: 1024px;
+    }
+  }
 }

@@ -1,15 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import Login from "./pages/Login.jsx";
-import ChatWindow from './components/ChatWindow';
-import ChatInput from './components/ChatInput';
-import HistorySidebar from './components/HistorySidebar';
-import UserProfile from './components/UserProfile';
-import ErrorBoundary from './components/ErrorBoundary';
-import { FullPageLoader } from './components/LoadingSpinner';
+import VerifyEmail from "./pages/VerifyEmail.jsx";
+import ChatWindow from './components/chat/ChatWindow';
+import ChatInput from './components/chat/ChatInput';
+import HistorySidebar from './components/chat/HistorySidebar';
+import UserProfile from './components/ui/UserProfile';
+import ErrorBoundary from './components/ui/ErrorBoundary';
+import LoadingSpinner, { FullPageLoader } from './components/ui/LoadingSpinner';
+import ConfirmationModal from './components/ui/ConfirmationModal';
+import OnboardingWizard from './components/onboarding/OnboardingWizard';
 import { Plus, Trash2, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { CONFIG } from './config/constants';
 import { v4 as uuidv4 } from 'uuid';
+import onboardingApi from './services/onboardingApi';
 
 function ChatApp({ onLogout }) {
   const [messages, setMessages] = useState([]);
@@ -21,6 +25,15 @@ function ChatApp({ onLogout }) {
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   const [scrollToBottom, setScrollToBottom] = useState(true);
 
+  // Delete confirmation modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [conversationToDelete, setConversationToDelete] = useState(null);
+
+  // Onboarding state
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
+  const [onboardingStatus, setOnboardingStatus] = useState(null);
+
   const [sessionId, setSessionId] = useState(() => {
     const saved = localStorage.getItem('session_id');
     if (saved) return saved;
@@ -31,8 +44,81 @@ function ChatApp({ onLogout }) {
 
   // Load conversations from server and localStorage on initial render
   useEffect(() => {
+    checkOnboardingStatus();
     loadChatSessions();
   }, []);
+
+  const checkOnboardingStatus = async () => {
+    try {
+      setIsCheckingOnboarding(true);
+      const status = await onboardingApi.checkOnboardingStatus();
+      
+      console.log('🔍 Onboarding status check results:', {
+        isComplete: status?.isComplete,
+        completionPercentage: status?.completionPercentage,
+        profileCompletionPercentage: status?.profileCompletionPercentage,
+        fullStatus: status
+      });
+      
+      setOnboardingStatus(status);
+      
+      // Only show onboarding if explicitly NOT complete
+      if (status && status.isComplete === true) {
+        console.log('✅ Onboarding is complete - skipping to chat');
+        setShowOnboarding(false);
+      } else if (status && (status.completionPercentage >= 100 || status.profileCompletionPercentage >= 100)) {
+        console.log('🔧 Profile shows 100% complete but not marked as finished - marking complete');
+        // If profile is 100% but not marked complete, mark it complete
+        try {
+          console.log('📝 Calling completeOnboarding API...');
+          await onboardingApi.completeOnboarding();
+          console.log('✅ Successfully marked onboarding as complete');
+          setShowOnboarding(false);
+          setOnboardingStatus(prev => ({ ...prev, isComplete: true }));
+        } catch (error) {
+          console.error('❌ Failed to auto-complete onboarding:', error);
+          setShowOnboarding(true);
+        }
+      } else {
+        console.log('❌ Onboarding not complete - showing wizard', {
+          isComplete: status?.isComplete,
+          completionPercentage: status?.completionPercentage,
+          profileCompletionPercentage: status?.profileCompletionPercentage
+        });
+        setShowOnboarding(true);
+      }
+    } catch (error) {
+      console.error('❌ Failed to check onboarding status:', error);
+      // If there's an error, assume onboarding is needed for new users
+      setShowOnboarding(true);
+    } finally {
+      setIsCheckingOnboarding(false);
+    }
+  };
+
+  const handleOnboardingComplete = async () => {
+    console.log('🎉 Onboarding completed! Updating status...');
+    setShowOnboarding(false);
+    setOnboardingStatus(prev => ({ ...prev, isComplete: true }));
+    
+    // Reload onboarding status to ensure it's properly synced
+    try {
+      console.log('🔄 Refreshing onboarding status after completion...');
+      await checkOnboardingStatus();
+    } catch (error) {
+      console.error('❌ Failed to refresh onboarding status:', error);
+    }
+    
+    // Optionally reload chat sessions or profile data
+    loadChatSessions();
+  };
+
+  const handleCloseOnboarding = () => {
+    // Don't allow closing onboarding if it's not complete - mandatory for all users
+    if (onboardingStatus?.isComplete) {
+      setShowOnboarding(false);
+    }
+  };
 
   const loadChatSessions = async () => {
     setIsLoadingSessions(true);
@@ -302,27 +388,62 @@ function ChatApp({ onLogout }) {
     localStorage.setItem('session_id', newSessionId);
   };
 
+  const handleDeleteRequest = (conversationId) => {
+    console.log('🗑️ Delete request for conversation:', conversationId);
+    setConversationToDelete(conversationId);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (conversationToDelete) {
+      console.log('✅ Confirmed deletion, proceeding with delete');
+      deleteConversation(conversationToDelete);
+      setDeleteModalOpen(false);
+      setConversationToDelete(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    console.log('❌ Cancelled deletion');
+    setDeleteModalOpen(false);
+    setConversationToDelete(null);
+  };
+
   const deleteConversation = async (conversationId) => {
+    console.log('🗑️ Attempting to delete conversation:', conversationId);
+    
     try {
       const token = localStorage.getItem('jwt_token');
-      const headers = {};
+      const headers = {
+        'Content-Type': 'application/json'
+      };
       
       // Add Authorization header if token exists
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
+      console.log('🔗 Delete API call to:', `${CONFIG.API_BASE_URL}/chat/${conversationId}`);
+      
       const response = await fetch(`${CONFIG.API_BASE_URL}/chat/${conversationId}`, {
         method: 'DELETE',
         headers: headers,
       });
       
+      console.log('📡 Delete response status:', response.status, response.statusText);
+      
       if (response.ok) {
+        console.log('✅ Successfully deleted conversation from server');
         // Remove from local state
-        setConversations(prev => prev.filter(c => c.id !== conversationId));
+        setConversations(prev => {
+          const filtered = prev.filter(c => c.id !== conversationId);
+          console.log('📝 Updated conversations list:', filtered.length, 'conversations remaining');
+          return filtered;
+        });
         
         // If this was the current conversation, clear the chat window
         if (currentConversationId === conversationId) {
+          console.log('🔄 Clearing current conversation from chat window');
           setCurrentConversationId(null);
           setMessages([]);
           // Generate new session ID for a fresh start
@@ -331,15 +452,67 @@ function ChatApp({ onLogout }) {
           localStorage.setItem('session_id', newSessionId);
         }
       } else {
-        console.error('Failed to delete conversation');
+        console.error('❌ Failed to delete conversation. Status:', response.status);
+        const errorText = await response.text();
+        console.error('Error details:', errorText);
+        
+        // For local conversations or when server fails, still remove from local state
+        if (response.status === 404 || response.status >= 500) {
+          console.log('🔄 Removing from local state anyway (server error or not found)');
+          setConversations(prev => prev.filter(c => c.id !== conversationId));
+          
+          if (currentConversationId === conversationId) {
+            setCurrentConversationId(null);
+            setMessages([]);
+            const newSessionId = uuidv4();
+            setSessionId(newSessionId);
+            localStorage.setItem('session_id', newSessionId);
+          }
+        }
       }
     } catch (error) {
-      console.error('Error deleting conversation:', error);
+      console.error('❌ Error deleting conversation:', error);
+      
+      // If network error, still try to remove from local state for local conversations
+      const conversation = conversations.find(c => c.id === conversationId);
+      if (conversation && !conversation.isFromServer) {
+        console.log('🔄 Removing local conversation from state');
+        setConversations(prev => prev.filter(c => c.id !== conversationId));
+        
+        if (currentConversationId === conversationId) {
+          setCurrentConversationId(null);
+          setMessages([]);
+          const newSessionId = uuidv4();
+          setSessionId(newSessionId);
+          localStorage.setItem('session_id', newSessionId);
+        }
+      }
     }
   };
 
+  // Show loading while checking onboarding status
+  if (isCheckingOnboarding) {
+    return (
+      <div className="h-screen w-full bg-gradient-to-br from-gray-50 via-white to-gray-100 font-sans flex items-center justify-center">
+        <LoadingSpinner size="md" text="Loading your profile..." />
+      </div>
+    );
+  }
+
+  // If onboarding is required and not complete, show only onboarding
+  if (showOnboarding && onboardingStatus && !onboardingStatus.isComplete) {
+    return (
+      <div className="h-screen w-full bg-gradient-to-br from-gray-50 via-white to-gray-100 font-sans flex overflow-hidden relative">
+        <OnboardingWizard 
+          onComplete={handleOnboardingComplete}
+          onClose={null} // Don't allow closing until complete
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="h-screen w-full bg-gradient-to-br from-gray-50 via-white to-gray-100 font-sans flex overflow-hidden relative">
+    <div className="chat-app-container h-screen w-full bg-gradient-to-br from-gray-50 via-white to-gray-100 font-sans flex relative">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-800/4 rounded-full blur-3xl"></div>
@@ -354,7 +527,7 @@ function ChatApp({ onLogout }) {
             conversations={conversations}
             onSelectConversation={selectConversation}
             onNewConversation={startNewConversation}
-            onDeleteConversation={deleteConversation}
+            onDeleteConversation={handleDeleteRequest}
             currentConversationId={currentConversationId}
             NewChatIcon={Plus}
             setIsOpen={setIsSidebarOpen}
@@ -372,7 +545,7 @@ function ChatApp({ onLogout }) {
           conversations={conversations}
           onSelectConversation={selectConversation}
           onNewConversation={startNewConversation}
-          onDeleteConversation={deleteConversation}
+          onDeleteConversation={handleDeleteRequest}
           currentConversationId={currentConversationId}
           NewChatIcon={Plus}
           isMobile={true}
@@ -439,11 +612,24 @@ function ChatApp({ onLogout }) {
               onRetryMessage={retryMessage}
             />
           </div>
-          <div className="bg-white/80 backdrop-blur-xl border-t border-gray-100">
-            <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+          <div className="flex-shrink-0">
+            <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} messages={messages} />
           </div>
         </main>
       </div>
+      
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Delete Conversation"
+        message="Are you sure you want to delete this conversation? This action cannot be undone and all messages will be permanently removed."
+        type="danger"
+        confirmText="Yes, Delete"
+        cancelText="No, Keep"
+      />
+
     </div>
   );
 }
@@ -563,6 +749,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route
             path="/*"
             element={

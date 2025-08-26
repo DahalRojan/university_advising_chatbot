@@ -167,6 +167,7 @@ const StudentProfileModal = ({ onClose }) => {
       'student_type',
       'academic_level',
       'enrollment_status',
+      'degree_program',
       'primary_major'
     ];
     
@@ -484,6 +485,22 @@ const StudentProfileModal = ({ onClose }) => {
                     </select>
                   ) : (
                     <p className="text-gray-900 py-2">{profile?.enrollment_status?.replace('-', ' ') || 'Not specified'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Degree Program
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editedProfile.degree_program || ''}
+                      onChange={(e) => updateField('degree_program', e.target.value)}
+                      placeholder="Enter your degree program"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900 py-2">{profile?.degree_program || 'Not specified'}</p>
                   )}
                 </div>
                 <div>

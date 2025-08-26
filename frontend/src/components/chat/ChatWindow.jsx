@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, memo } from 'react';
 import { CornerDownRight, RefreshCw, AlertCircle } from 'lucide-react';
-import { ChatLoader } from './LoadingSpinner';
+import { ChatLoader } from '../ui/LoadingSpinner';
 
 function ChatWindow({ messages, isLoading, scrollToBottom = true, onRetryMessage }) {
   const chatEndRef = useRef(null);
@@ -37,11 +37,11 @@ function ChatWindow({ messages, isLoading, scrollToBottom = true, onRetryMessage
         </div>
       </div>
       <div className="max-w-md mx-auto">
-        <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-4">
-          Welcome to <span className="bg-gradient-to-r from-red-600 to-red-500 bg-clip-text text-transparent">University</span> Advising
+        <h2 className="heading-xl mb-4">
+          Welcome to <span className="text-gannon-maroon">University</span> Advising
         </h2>
         <div className="space-y-3">
-          <p className="text-gray-600 text-base md:text-lg">Your AI-powered academic advisor is ready to help</p>
+          <p className="body-lg text-slate-600">Your AI-powered academic advisor is ready to help</p>
           <div className="flex flex-wrap gap-2 justify-center mt-6">
             <span className="px-3 py-1 bg-red-50 text-red-700 rounded-full text-sm font-medium border border-red-100">Course Planning</span>
             <span className="px-3 py-1 bg-red-50 text-red-700 rounded-full text-sm font-medium border border-red-100">Degree Requirements</span>
@@ -54,7 +54,7 @@ function ChatWindow({ messages, isLoading, scrollToBottom = true, onRetryMessage
 
   const renderStructuredResponse = (rawText) => {
     if (!rawText || (!rawText.includes('**') || !rawText.includes('+'))) {
-      return <p className="whitespace-pre-wrap">{rawText}</p>;
+      return <p className="chat-assistant-message whitespace-pre-wrap">{rawText}</p>;
     }
 
     try {
@@ -63,13 +63,13 @@ function ChatWindow({ messages, isLoading, scrollToBottom = true, onRetryMessage
 
       return (
         <div>
-          {intro && <p className="mb-4 whitespace-pre-wrap">{intro}</p>}
+          {intro && <p className="chat-assistant-message mb-4 whitespace-pre-wrap">{intro}</p>}
           {sections.map((section, idx) => {
             const [title, ...content] = section.split(':');
             const courses = content.join(':').split('+').map(c => c.trim()).filter(Boolean);
             return (
               <div key={idx} className="mb-3 last:mb-0">
-                {title && <h3 className="font-semibold text-gray-800 mb-2">{title.trim()}</h3>}
+                {title && <h3 className="heading-sm mb-2">{title.trim()}</h3>}
                 <ul className="space-y-1">
                   {courses.map((course, courseIdx) => (
                     <li key={courseIdx} className="flex items-start">
@@ -111,7 +111,7 @@ function ChatWindow({ messages, isLoading, scrollToBottom = true, onRetryMessage
             >
               <div className={`w-10 h-10 rounded-2xl flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm shadow-lg ${
                 msg.sender === 'user' 
-                  ? 'bg-gradient-to-br from-red-500 to-red-600 shadow-red-500/25' 
+                  ? 'bg-gradient-to-br from-red-800 to-red-900 shadow-red-800/30' 
                   : 'bg-gradient-to-br from-gray-600 to-gray-700 shadow-gray-600/25'
               }`}>
                 {msg.sender === 'user' ? (
@@ -127,14 +127,14 @@ function ChatWindow({ messages, isLoading, scrollToBottom = true, onRetryMessage
               <div
                 className={`max-w-[80%] md:max-w-xl p-4 md:p-5 rounded-3xl shadow-lg backdrop-blur-sm ${
                   msg.sender === 'user'
-                    ? 'bg-gradient-to-br from-red-500 to-red-600 text-white rounded-br-lg shadow-red-500/20'
+                    ? 'bg-gradient-to-br from-red-800 to-red-900 text-white rounded-br-lg shadow-red-800/25 border border-red-700/20'
                     : msg.isError
                       ? 'bg-gradient-to-br from-red-50 to-red-100 text-red-800 border border-red-200 rounded-bl-lg shadow-red-200/50'
-                      : 'bg-white/80 backdrop-blur-md border border-gray-100 text-gray-800 rounded-bl-lg shadow-gray-200/50'
+                      : 'bg-white/95 backdrop-blur-md border border-gray-200/50 text-gray-800 rounded-bl-lg shadow-gray-300/40'
                 }`}
               >
                 <div className="relative">
-                  {msg.sender === 'bot' ? renderStructuredResponse(msg.rawText) : <p className="text-sm md:text-base leading-relaxed">{msg.text}</p>}
+                  {msg.sender === 'bot' ? renderStructuredResponse(msg.rawText) : <p className="chat-user-message text-white">{msg.text}</p>}
                   {msg.isError && onRetryMessage && (
                     <div className="mt-3 pt-3 border-t border-red-200">
                       <button
