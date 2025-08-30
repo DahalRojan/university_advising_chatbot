@@ -33,19 +33,17 @@ WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
 
 # Copy your application source code.
-COPY ./src ./src
+COPY . .
 
-# Copy your vector database (knowledge base).
-COPY ./vector_db ./vector_db
-
-# Copy your environment file.
-COPY ./configs/.env ./configs/.env
+# Copy configuration files if they exist
+COPY ./config/ ./config/ 2>/dev/null || true
 
 # Activate the virtual environment for the running container.
 ENV PATH="/opt/venv/bin:$PATH"
+ENV PYTHONPATH=/app
 
 # Expose the port the app runs on to the outside world.
-EXPOSE 8000
+EXPOSE 8080
 
 # Define the command to run your app when the container launches.
-CMD ["uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "run_chatbot.py"]
