@@ -1,74 +1,66 @@
-# Optimized Multi-stage Dockerfile for University Advising Chatbot
-# Designed for Google Cloud Run with fast startup and small size
+# Clean, optimized Dockerfile for University Advising Chatbot
+# Designed for Google Cloud Run with fast startup
 
 # Stage 1: Build frontend
-FROM node:18-alpine AS frontend-build
+FROM node:20-alpine AS frontend-build
 WORKDIR /app/frontend
 
-# Copy package files first (better caching)
+# Copy package files
 COPY frontend/package*.json ./
-RUN npm ci --only=production
 
-# Copy source and build
+# Install ALL dependencies (including dev dependencies needed for build)
+RUN npm ci
+
+# Copy frontend source and build
 COPY frontend/ ./
 RUN npm run build
 
-# Stage 2: Python dependencies
-FROM python:3.11-slim AS python-deps
-WORKDIR /app
+# Stage 2: Python backend with model pre-loading
+FROM python:3.11-slim AS backend-deps
 
-# Install system dependencies (minimal for faster builds)
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
+    curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
 
 # Copy and install Python requirements
 COPY backend/requirements.txt ./
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Pre-download critical ML models to avoid cold start delays
-RUN python -c "\
-import os; \
-try: \
-    from sentence_transformers import SentenceTransformer; \
-    print('Downloading BGE-large model for faster startup...'); \
-    SentenceTransformer('BAAI/bge-large-en-v1.5'); \
-    print('BGE-large model download completed'); \
-    try: \
-        from sentence_transformers import CrossEncoder; \
-        CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2'); \
-        print('Cross-encoder model download completed'); \
-    except Exception as ce: \
-        print(f'Cross-encoder download failed: {ce}'); \
-except Exception as e: \
-    print(f'Model pre-download failed: {e}'); \
-    print('Models will be downloaded at runtime (slower cold starts)'); \
-" 2>/dev/null || echo "Pre-download skipped"
+# Pre-download ML models (single line to avoid Docker parser issues)
+RUN python -c "from sentence_transformers import SentenceTransformer, CrossEncoder; SentenceTransformer('BAAI/bge-large-en-v1.5'); CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2'); print('Models downloaded successfully')" || echo "Models will download at runtime"
 
 # Stage 3: Final production image
 FROM python:3.11-slim AS production
 
-# Create non-root user for security
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 # Set working directory
 WORKDIR /app
 
-# Install minimal runtime dependencies only
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get purge -y --auto-remove
-
-# Copy Python packages from deps stage
-COPY --from=python-deps /root/.local /home/appuser/.local
+# Copy Python packages from backend-deps stage
+COPY --from=backend-deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=backend-deps /usr/local/bin /usr/local/bin
 
 # Copy backend source code
 COPY backend/ ./backend/
 
-# Copy built frontend
+# Copy built frontend from frontend-build stage
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
+
+# Copy model cache from backend-deps stage
+COPY --from=backend-deps /root/.cache /home/appuser/.cache
 
 # Create necessary directories and set permissions
 RUN mkdir -p /app/backend/embeddings /app/backend/data \
@@ -77,32 +69,18 @@ RUN mkdir -p /app/backend/embeddings /app/backend/data \
 # Switch to non-root user
 USER appuser
 
-# Set environment variables for production
-ENV PATH=/home/appuser/.local/bin:$PATH
+# Set environment variables
 ENV PYTHONPATH=/app/backend
 ENV PYTHONUNBUFFERED=1
-ENV PORT=8080
 ENV PYTHONDONTWRITEBYTECODE=1
+ENV PORT=8080
 
 # Expose port
 EXPOSE 8080
 
-# Add health check for Cloud Run
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-# Create startup script for model warmup + server start
-RUN echo '#!/bin/bash' > /app/start.sh && \
-    echo 'echo "🚀 Starting University Advising Chatbot..."' >> /app/start.sh && \
-    echo 'cd /app/backend' >> /app/start.sh && \
-    echo 'python startup_warmup.py' >> /app/start.sh && \
-    echo 'if [ $? -eq 0 ]; then' >> /app/start.sh && \
-    echo '  echo "✅ Warmup successful, starting server..."' >> /app/start.sh && \
-    echo 'else' >> /app/start.sh && \
-    echo '  echo "⚠️ Warmup had issues, starting server anyway..."' >> /app/start.sh && \
-    echo 'fi' >> /app/start.sh && \
-    echo 'exec python -m uvicorn core.api:app --host 0.0.0.0 --port 8080 --workers 1' >> /app/start.sh && \
-    chmod +x /app/start.sh
-
-# Optimize startup command with warmup
-CMD ["/app/start.sh"]
+# Simple, reliable startup command
+CMD ["python", "-m", "uvicorn", "core.api:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]
