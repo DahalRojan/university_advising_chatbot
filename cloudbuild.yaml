@@ -1,13 +1,19 @@
 steps:
-# Build the Docker image
+# Build the optimized Docker image
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-f', 'Dockerfile', '-t', 'northamerica-northeast2-docker.pkg.dev/university-bot-467017/ai-advisor/university_advising_backend:latest', '.']
+  args: [
+    'build', 
+    '-f', 'Dockerfile', 
+    '--target', 'production',
+    '-t', 'northamerica-northeast2-docker.pkg.dev/university-bot-467017/ai-advisor/university_advising_backend:latest', 
+    '.'
+  ]
 
 # Push the image to Artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'northamerica-northeast2-docker.pkg.dev/university-bot-467017/ai-advisor/university_advising_backend:latest']
 
-# Deploy to Cloud Run
+# Deploy to Cloud Run with optimized settings
 - name: 'gcr.io/cloud-builders/gcloud'
   args: 
   - 'run'
@@ -23,14 +29,22 @@ steps:
   - '--port'
   - '8080'
   - '--memory'
-  - '2Gi'
+  - '4Gi'
   - '--cpu'
   - '2'
+  - '--min-instances'
+  - '1'
+  - '--max-instances'
+  - '10'
+  - '--concurrency'
+  - '80'
+  - '--timeout'
+  - '300'
   - '--set-env-vars'
-  - 'PYTHONPATH=/app/backend'
+  - 'PYTHONPATH=/app/backend,PYTHONDONTWRITEBYTECODE=1'
 
-# Set timeout for long builds
-timeout: '1200s'
+# Set timeout for builds
+timeout: '1800s'
 
 # Use high-performance machine for faster builds
 options:
