@@ -637,7 +637,7 @@ function ChatApp({ onLogout }) {
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
 
-  const checkAuthStatus = async (retries = 3) => {
+  const checkAuthStatus = async (retries = 1) => {
     try {
       const authUrl = `${CONFIG.API_BASE_URL}/auth/status`;
       const token = localStorage.getItem('jwt_token');
@@ -645,21 +645,30 @@ function App() {
       console.log('🔍 Checking auth status at:', authUrl);
       console.log('🔑 Using JWT token:', token ? 'Present' : 'Missing');
       
+      // If no token, skip server check and set to false immediately
+      if (!token) {
+        console.log('⚡ No JWT token found, setting authenticated to false');
+        setIsAuthenticated(false);
+        localStorage.removeItem('authState');
+        return;
+      }
+      
       const headers = {
+        'Authorization': `Bearer ${token}`,
         'Cache-Control': 'no-cache'
       };
       
-      // Add Authorization header if token exists
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+      // Create abort controller for faster timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
       
       const response = await fetch(authUrl, {
         method: "GET",
         headers: headers,
-        timeout: 10000, // 10 second timeout
+        signal: controller.signal
       });
       
+      clearTimeout(timeoutId);
       console.log('📡 Auth status response:', response.status, response.statusText);
       
       if (!response.ok) {
@@ -679,9 +688,11 @@ function App() {
       console.error('Auth check failed:', error);
       
       if (retries > 0 && error.name !== 'AbortError') {
-        // Retry after delay
-        setTimeout(() => checkAuthStatus(retries - 1), 1000);
+        // Only retry once, with shorter delay
+        setTimeout(() => checkAuthStatus(retries - 1), 500);
       } else {
+        // If auth check fails, assume not authenticated
+        console.log('🔒 Auth check failed, assuming not authenticated');
         setIsAuthenticated(false);
         localStorage.removeItem('authState');
       }
@@ -722,18 +733,29 @@ function App() {
     
     // Try to get cached auth state first (for faster loading)
     const cachedAuth = localStorage.getItem('authState');
-    if (cachedAuth) {
+    const token = localStorage.getItem('jwt_token');
+    
+    if (cachedAuth && token) {
       try {
         const authData = JSON.parse(cachedAuth);
-        // Use cached state if less than 5 minutes old
-        if (Date.now() - authData.timestamp < 300000) {
+        // Use cached state if less than 2 minutes old for faster UX
+        if (Date.now() - authData.timestamp < 120000) {
+          console.log('⚡ Using cached auth state:', authData.authenticated);
           setIsAuthenticated(authData.authenticated);
-          // If we have recent cached auth, don't need to verify immediately
+          // Still verify in background but don't block UI
+          setTimeout(() => checkAuthStatus(), 100);
           return;
         }
       } catch (e) {
         localStorage.removeItem('authState');
       }
+    }
+    
+    // If no token at all, immediately set to false
+    if (!token) {
+      console.log('⚡ No JWT token, immediately setting to false');
+      setIsAuthenticated(false);
+      return;
     }
     
     // Only verify with server if no recent cached auth or successful redirect
