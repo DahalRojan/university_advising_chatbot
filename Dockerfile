@@ -28,24 +28,22 @@ COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Pre-download critical ML models to avoid cold start delays
-RUN python -c "
-import os
-try:
-    from sentence_transformers import SentenceTransformer
-    print('Downloading BGE-large model for faster startup...')
-    # Download the large model you're actually using
-    SentenceTransformer('BAAI/bge-large-en-v1.5')
-    print('BGE-large model download completed')
-    # Also download the cross-encoder for reranking
-    try:
-        from sentence_transformers import CrossEncoder
-        CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
-        print('Cross-encoder model download completed')
-    except Exception as ce:
-        print(f'Cross-encoder download failed: {ce}')
-except Exception as e:
-    print(f'Model pre-download failed: {e}')
-    print('Models will be downloaded at runtime (slower cold starts)')
+RUN python -c "\
+import os; \
+try: \
+    from sentence_transformers import SentenceTransformer; \
+    print('Downloading BGE-large model for faster startup...'); \
+    SentenceTransformer('BAAI/bge-large-en-v1.5'); \
+    print('BGE-large model download completed'); \
+    try: \
+        from sentence_transformers import CrossEncoder; \
+        CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2'); \
+        print('Cross-encoder model download completed'); \
+    except Exception as ce: \
+        print(f'Cross-encoder download failed: {ce}'); \
+except Exception as e: \
+    print(f'Model pre-download failed: {e}'); \
+    print('Models will be downloaded at runtime (slower cold starts)'); \
 " 2>/dev/null || echo "Pre-download skipped"
 
 # Stage 3: Final production image
@@ -94,17 +92,17 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
 # Create startup script for model warmup + server start
-RUN echo '#!/bin/bash\n\
-echo "🚀 Starting University Advising Chatbot..."\n\
-cd /app/backend\n\
-python startup_warmup.py\n\
-if [ $? -eq 0 ]; then\n\
-  echo "✅ Warmup successful, starting server..."\n\
-else\n\
-  echo "⚠️ Warmup had issues, starting server anyway..."\n\
-fi\n\
-exec python -m uvicorn core.api:app --host 0.0.0.0 --port 8080 --workers 1\n\
-' > /app/start.sh && chmod +x /app/start.sh
+RUN echo '#!/bin/bash' > /app/start.sh && \
+    echo 'echo "🚀 Starting University Advising Chatbot..."' >> /app/start.sh && \
+    echo 'cd /app/backend' >> /app/start.sh && \
+    echo 'python startup_warmup.py' >> /app/start.sh && \
+    echo 'if [ $? -eq 0 ]; then' >> /app/start.sh && \
+    echo '  echo "✅ Warmup successful, starting server..."' >> /app/start.sh && \
+    echo 'else' >> /app/start.sh && \
+    echo '  echo "⚠️ Warmup had issues, starting server anyway..."' >> /app/start.sh && \
+    echo 'fi' >> /app/start.sh && \
+    echo 'exec python -m uvicorn core.api:app --host 0.0.0.0 --port 8080 --workers 1' >> /app/start.sh && \
+    chmod +x /app/start.sh
 
 # Optimize startup command with warmup
 CMD ["/app/start.sh"]
