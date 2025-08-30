@@ -271,6 +271,17 @@ async def login(request: Request):
     
     return await oauth.azure.authorize_redirect(request, redirect_uri)
 
+@app.post('/login')
+async def post_login_redirect():
+    """
+    Handle incorrect POST to /login - redirect to proper endpoints
+    This fixes the 405 Method Not Allowed error
+    """
+    raise HTTPException(
+        status_code=400, 
+        detail="Use GET /login for OAuth or POST /auth/login for username/password login"
+    )
+
 @app.get('/auth')
 async def auth(request: Request):
     import httpx
