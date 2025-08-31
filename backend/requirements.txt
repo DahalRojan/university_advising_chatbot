@@ -6,20 +6,43 @@ torch
 torchvision
 torchaudio
 
-# Application dependencies (will be found on the default PyPI)
+# Core web framework
 fastapi
 uvicorn[standard]
+
+# Validation and data models (CRITICAL - EmailStr support)
+pydantic[email]
+
+# Environment and configuration
 python-dotenv
+
+# HTTP clients and requests
 requests
+httpx
+
+# Vector database and embeddings
 qdrant-client
 sentence-transformers
+
+# LangChain ecosystem
 langchain
+
+# Authentication and security
 authlib
 itsdangerous
-httpx
-PyMuPDF
 PyJWT
-pinecone
+bcrypt
+
+# Database
 psycopg2-binary
 sqlalchemy
-bcrypt
+
+# Document processing
+PyMuPDF
+
+# Machine learning and scientific computing (MISSING!)
+numpy
+scikit-learn
+
+# Vector database alternatives
+pinecone
