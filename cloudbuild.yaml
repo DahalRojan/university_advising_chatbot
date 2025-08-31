@@ -32,6 +32,7 @@ steps:
   - '4Gi'
   - '--cpu'
   - '2'
+  - '--cpu-boost'
   - '--min-instances'
   - '1'
   - '--max-instances'
@@ -39,7 +40,7 @@ steps:
   - '--concurrency'
   - '80'
   - '--timeout'
-  - '300'
+  - '900'
   - '--set-env-vars'
   - 'PYTHONPATH=/app/backend,PYTHONDONTWRITEBYTECODE=1'
 
