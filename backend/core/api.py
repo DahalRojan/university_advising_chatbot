@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from .llm_chain import ask_llm, ask_llm_enhanced
 from .llm_chain_personalized import ask_llm_personalized
 from .retriever import advanced_retrieve, advanced_retrieve_with_confidence
 from .conversation_db import create_table, add_message, get_history, get_user_sessions, update_session_summary, get_session_summary, delete_conversation
@@ -35,6 +34,7 @@ from features.auth.models import (
     ResendVerificationRequest, ResendVerificationResponse,
     CheckAvailabilityRequest, CheckAvailabilityResponse
 )
+from features.courses.course_api import router as course_router
 
 # Load environment variables
 load_dotenv("./config/.env")
@@ -53,6 +53,9 @@ if missing_vars:
     print("OAuth features will be disabled until these are provided.")
 
 app = FastAPI()
+
+# Include course API router
+app.include_router(course_router)
 
 # Mount static files (frontend assets)
 if os.path.exists("./frontend/dist"):
@@ -249,6 +252,7 @@ else:
 class ChatRequest(BaseModel):
     message: str
     session_id: str = None
+    query_mode: str = "catalog_info"  # "catalog_info" or "current_sections"
 
 class ChatResponse(BaseModel):
     answer: str
@@ -375,6 +379,289 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         print(f"[AUTH] JWT verification failed: {e.detail}")
         raise e
 
+def handle_current_sections_query(chat_request: ChatRequest, session_id: str, user_email: str) -> ChatResponse:
+    """
+    Smart PostgreSQL handler for current_sections mode.
+    LLM understands the query, PostgreSQL provides live data.
+    No student profile, no embeddings - just query understanding + database.
+    """
+    try:
+        from features.courses.course_information_service import CourseInformationService
+        from core.course_aware_retriever import CourseAwareRetriever
+        import requests
+
+        # Step 1: Use LLM to understand the natural language query
+        print(f"   Step 1: LLM Query Understanding...")
+
+        understanding_prompt = f"""
+        Analyze this student query and extract the key information for a course database search:
+
+        Query: "{chat_request.message}"
+
+        Examples:
+        - "cyber security courses" → QUERY_TYPE: department_search, SEARCH_TERMS: GCYSEC, CYSEC, cyber
+        - "programming courses" → QUERY_TYPE: department_search, SEARCH_TERMS: GCIS, CIS, programming
+        - "GCIS courses" → QUERY_TYPE: department_search, SEARCH_TERMS: GCIS
+        - "computer science courses" → QUERY_TYPE: department_search, SEARCH_TERMS: GCIS, CIS
+        - "GCIS 698" → QUERY_TYPE: course_search, SEARCH_TERMS: GCIS 698
+        - "what faculty teach GCIS 698" → QUERY_TYPE: course_search, SEARCH_TERMS: GCIS 698
+        - "what does Dr Smith teach" → QUERY_TYPE: faculty_search, SEARCH_TERMS: Smith
+
+        Please identify:
+        1. What type of query is this? (faculty_search, course_search, department_search, general_search)
+        2. What specific terms should I search for in the database?
+
+        Respond in this exact format:
+        QUERY_TYPE: [type]
+        SEARCH_TERMS: [comma-separated terms]
+        EXPLANATION: [brief explanation]
+        """
+
+        # Call LLM for query understanding
+        try:
+            llm_response = requests.post(
+                "https://llm.rojandahal.com/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {os.getenv('LOCAL_LLM_API_KEY')}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4",
+                    "messages": [{"role": "user", "content": understanding_prompt}],
+                    "temperature": 0.1,
+                    "max_tokens": 200
+                },
+                timeout=10
+            )
+
+            if llm_response.status_code == 200:
+                llm_result = llm_response.json()
+                understanding = llm_result['choices'][0]['message']['content']
+                print(f"   LLM Understanding: {understanding[:100]}...")
+            else:
+                understanding = "QUERY_TYPE: general_search\nSEARCH_TERMS: " + chat_request.message
+                print(f"   LLM fallback used")
+
+        except Exception as e:
+            print(f"   LLM understanding failed: {e}, using fallback")
+            # Smart fallback based on common patterns with correct course codes
+            query_lower = chat_request.message.lower()
+
+            # Check for specific course codes first (e.g., "GCIS 698", "CIS 101")
+            import re
+            course_pattern = r'\b(GCIS|GCYSEC|CIS|CYSEC)\s+\d{3,4}\b'
+            course_match = re.search(course_pattern, chat_request.message, re.IGNORECASE)
+            if course_match:
+                course_code = course_match.group(0)
+                understanding = f"QUERY_TYPE: course_search\nSEARCH_TERMS: {course_code}"
+            elif any(term in query_lower for term in ['cyber', 'security', 'cybersecurity']):
+                understanding = "QUERY_TYPE: department_search\nSEARCH_TERMS: GCYSEC, CYSEC, cyber"
+            elif any(term in query_lower for term in ['programming', 'program', 'coding', 'computer science', 'cs']):
+                understanding = "QUERY_TYPE: department_search\nSEARCH_TERMS: GCIS, CIS, programming"
+            elif any(term in query_lower for term in ['gcis']):
+                understanding = "QUERY_TYPE: department_search\nSEARCH_TERMS: GCIS"
+            elif any(term in query_lower for term in ['gcysec']):
+                understanding = "QUERY_TYPE: department_search\nSEARCH_TERMS: GCYSEC"
+            elif any(term in query_lower for term in ['cis']):
+                understanding = "QUERY_TYPE: department_search\nSEARCH_TERMS: CIS"
+            elif any(term in query_lower for term in ['cysec']):
+                understanding = "QUERY_TYPE: department_search\nSEARCH_TERMS: CYSEC"
+            else:
+                understanding = "QUERY_TYPE: general_search\nSEARCH_TERMS: " + chat_request.message
+
+        # Step 2: Parse LLM understanding and perform PostgreSQL search
+        print(f"   Step 2: PostgreSQL Database Search...")
+
+        # Extract query type and search terms from LLM response
+        query_type = "general_search"
+        search_terms = [chat_request.message]
+
+        for line in understanding.split('\n'):
+            if line.startswith('QUERY_TYPE:'):
+                query_type = line.split(':', 1)[1].strip()
+            elif line.startswith('SEARCH_TERMS:'):
+                terms_str = line.split(':', 1)[1].strip()
+                search_terms = [term.strip() for term in terms_str.split(',')]
+
+        # Post-process and correct LLM understanding if needed
+        import re
+        course_pattern = r'\b(GCIS|GCYSEC|CIS|CYSEC)\s+\d{3,4}\b'
+        course_match = re.search(course_pattern, chat_request.message, re.IGNORECASE)
+
+        if course_match and query_type == 'department_search':
+            # LLM incorrectly classified a specific course query as department search
+            course_code = course_match.group(0)
+            query_type = 'course_search'
+            search_terms = [course_code]
+            print(f"   Corrected: Detected specific course code '{course_code}', changing to course_search")
+
+        print(f"   Final Query Type: {query_type}")
+        print(f"   Final Search Terms: {search_terms}")
+
+        # Also use original course analysis as fallback
+        retriever = CourseAwareRetriever()
+        query_analysis = retriever.is_course_query(chat_request.message)
+        print(f"   CourseAwareRetriever analysis: {query_analysis}")
+
+        course_service = CourseInformationService()
+        response_text = ""
+
+        # Step 3: Execute smart database search based on LLM understanding
+        all_courses = []
+
+        # Prioritize LLM understanding, use CourseAwareRetriever as fallback only
+        if query_type == 'faculty_search' or (query_type == 'general_search' and query_analysis.get('query_type') == 'faculty'):
+            # Faculty query - search using both LLM terms and original detection
+            faculty_name = query_analysis.get('faculty_name', '').strip()
+            if not faculty_name and search_terms:
+                faculty_name = search_terms[0]  # Use LLM understanding
+
+            print(f"   PostgreSQL Faculty Search: {faculty_name}")
+
+            # Try multiple search variations for faculty name
+            search_variations = [faculty_name] + search_terms
+
+            # Add variations: "Dr Matovu" -> also try "Dr R Matovu", "Matovu"
+            name_parts = faculty_name.replace('Dr ', '').replace('Professor ', '').strip()
+            if name_parts and name_parts not in search_variations:
+                search_variations.append(name_parts)
+
+            for search_term in search_variations:
+                if not search_term:
+                    continue
+                courses = course_service.search_courses(search_term, limit=25)
+                for course in courses:
+                    # Flexible matching: if any part of the search term appears in faculty field
+                    search_parts = search_term.replace('Dr ', '').replace('Professor ', '').strip().split()
+                    if any(part.lower() in course.faculty.lower() for part in search_parts if len(part) > 2):
+                        if course not in all_courses:
+                            all_courses.append(course)
+
+                if all_courses:  # Found matches, stop searching
+                    break
+
+        elif query_type == 'course_search' or (query_type == 'general_search' and query_analysis.get('course_code')):
+            # Course-specific query using LLM understanding
+            course_code = query_analysis.get('course_code')
+            if not course_code and search_terms:
+                course_code = search_terms[0]  # Use LLM understanding
+
+            print(f"   PostgreSQL Course Search: {course_code}")
+
+            courses = course_service.get_course_details(course_code)
+            if not courses:
+                courses = course_service.search_courses(course_code, limit=10)
+            all_courses = courses
+
+        elif query_type == 'department_search':
+            # Department query using LLM understanding with course code filtering
+            print(f"   PostgreSQL Department Search: {search_terms}")
+
+            for search_term in search_terms:
+                print(f"     Searching for: {search_term}")
+
+                # Try direct search first
+                courses = course_service.search_courses(search_term, limit=20)
+                print(f"     Direct search found: {len(courses)} courses")
+
+                # For course codes, also try filtering by department prefix
+                if search_term.upper() in ['GCYSEC', 'GCIS', 'CIS', 'CYSEC']:
+                    dept_courses = course_service.search_courses("", filters={'department': search_term.upper()}, limit=50)
+                    print(f"     Department filter found: {len(dept_courses)} courses")
+                    courses.extend(dept_courses)
+
+                for course in courses:
+                    if course not in all_courses:
+                        all_courses.append(course)
+
+            print(f"   Total unique courses found: {len(all_courses)}")
+
+        else:
+            # General search using LLM understanding
+            print(f"   PostgreSQL General Search: {search_terms}")
+
+            for search_term in search_terms:
+                print(f"     Searching for: {search_term}")
+                courses = course_service.search_courses(search_term, limit=15)
+                print(f"     Found: {len(courses)} courses")
+                for course in courses:
+                    if course not in all_courses:
+                        all_courses.append(course)
+
+            print(f"   Total unique courses found: {len(all_courses)}")
+
+        # Step 4: Format response based on what was found
+        if all_courses:
+            # Determine response title based on query type
+            if query_type == 'faculty_search' or (query_type == 'general_search' and query_analysis.get('query_type') == 'faculty'):
+                faculty_name = query_analysis.get('faculty_name', search_terms[0] if search_terms else 'instructor')
+                response_text = f"**Courses taught by {faculty_name} (Current Term):**\n\n"
+                response_text += f"Found {len(all_courses)} courses:\n\n"
+            elif query_type == 'course_search':
+                course_code = query_analysis.get('course_code', search_terms[0] if search_terms else 'requested course')
+                if any(word in chat_request.message.lower() for word in ['faculty', 'professor', 'instructor', 'teach', 'option']):
+                    response_text = f"**Faculty options for {course_code} (Current Term):**\n\n"
+                else:
+                    response_text = f"**Current sections for {course_code}:**\n\n"
+            elif query_type == 'department_search':
+                dept_name = search_terms[0] if search_terms else 'department'
+                response_text = f"**{dept_name.title()} courses (Current Term):**\n\n"
+                response_text += f"Found {len(all_courses)} courses:\n\n"
+            else:
+                response_text = f"**Current course sections matching '{chat_request.message}':**\n\n"
+                response_text += f"Found {len(all_courses)} courses:\n\n"
+
+            # Format all courses
+            for course in all_courses[:15]:  # Limit to first 15
+                response_text += f"**{course.course_code} {course.section_name} - {course.title}**\n"
+                response_text += f"- Status: {course.status}\n"
+                response_text += f"- Enrollment: {course.enrollment_current}/{course.enrollment_capacity}"
+                if course.enrollment_capacity and course.enrollment_current:
+                    available = course.enrollment_capacity - course.enrollment_current
+                    response_text += f" (Available: {available})\n"
+                else:
+                    response_text += "\n"
+                response_text += f"- Faculty: {course.faculty}\n"
+                response_text += f"- Meeting: {course.meeting_information}\n\n"
+
+            if len(all_courses) > 15:
+                response_text += f"... and {len(all_courses) - 15} more courses.\n"
+
+        else:
+            # No courses found
+            if query_type == 'faculty_search' or (query_type == 'general_search' and query_analysis.get('query_type') == 'faculty'):
+                faculty_name = query_analysis.get('faculty_name', search_terms[0] if search_terms else 'instructor')
+                response_text = f"No courses found for {faculty_name} in the current term database."
+            else:
+                response_text = "No current course sections found matching your query."
+
+        # Add response to conversation history
+        add_message(session_id, user_email, "assistant", response_text)
+
+        # Return simple response
+        return ChatResponse(
+            answer=response_text,
+            confidence=85,
+            suggested_questions=[
+                "What other courses are available?",
+                "Show me course schedules",
+                "Which faculty teach what courses?"
+            ],
+            session_id=session_id
+        )
+
+    except Exception as e:
+        print(f"Error in PostgreSQL handler: {e}")
+        error_response = "Sorry, I encountered an error while searching the course database. Please try again."
+        add_message(session_id, user_email, "assistant", error_response)
+
+        return ChatResponse(
+            answer=error_response,
+            confidence=30,
+            suggested_questions=["Try asking about specific courses", "Ask about faculty", "Search for course schedules"],
+            session_id=session_id
+        )
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat_enhanced(chat_request: ChatRequest, request: Request, user: dict = Depends(get_current_user)):
     """
@@ -397,7 +684,15 @@ async def chat_enhanced(chat_request: ChatRequest, request: Request, user: dict 
         
         # Add user message to conversation history
         add_message(session_id, user_email, "user", chat_request.message)
-        
+
+        # COMPLETE SEPARATION: Handle current_sections mode with pure PostgreSQL
+        if chat_request.query_mode == "current_sections":
+            print(f"   Query Mode: {chat_request.query_mode} - Using PURE POSTGRESQL (no embeddings, no student profile)")
+            return handle_current_sections_query(chat_request, session_id, user_email)
+
+        # Continue with full AI pipeline for catalog_info mode
+        print(f"   Query Mode: {chat_request.query_mode} - Using FULL AI PIPELINE (embeddings + student profile)")
+
         # Get conversation history for context (excluding current message for similarity check)
         full_history = get_history(session_id, user_email)
         history_for_similarity = full_history[:-1]  # Exclude current message
@@ -498,16 +793,23 @@ async def chat_enhanced(chat_request: ChatRequest, request: Request, user: dict 
             )
         
         # PHASE 1 ENHANCEMENT 2: Enhanced retrieval with confidence scoring
-        print("Performing enhanced retrieval...")
-        retrieval_result = advanced_retrieve_with_confidence(chat_request.message)
+        print("Performing course-aware enhanced retrieval...")
+        from core.course_aware_retriever import course_aware_retrieve_with_details
+        retrieval_result = course_aware_retrieve_with_details(
+            chat_request.message,
+            student_email=user_email,
+            top_k=5,
+            query_mode=chat_request.query_mode
+        )
         
-        print(f"   Retrieval confidence: {retrieval_result['confidence']['confidence_score']:.2f}")
-        print(f"   Documents found: {retrieval_result['retrieval_details']['final_docs_count']}")
-        print(f"   Recommendation: {retrieval_result['recommendation']['action']}")
-        
+        print(f"   Retrieval confidence: {retrieval_result.get('confidence', 0.0):.2f}")
+        print(f"   Course data used: {retrieval_result.get('course_data_used', False)}")
+        print(f"   Query type: {retrieval_result.get('query_analysis', {}).get('query_type', 'unknown')}")
+        print(f"   Sources found: {len(retrieval_result.get('sources', []))}")
+
         # PHASE 1 ENHANCEMENT 3: Smart fallback analysis
         print("Analyzing fallback requirements...")
-        
+
         # Build conversation context for fallback analysis
         if history_for_context:
             conversation_context = context_manager.build_enhanced_context(
@@ -515,14 +817,22 @@ async def chat_enhanced(chat_request: ChatRequest, request: Request, user: dict 
             )
         else:
             conversation_context = None
-        
+
         # Preliminary LLM confidence estimation based on retrieval
-        estimated_llm_confidence = min(5, max(1, int(retrieval_result['confidence']['confidence_score'] * 5)))
-        
+        estimated_llm_confidence = min(5, max(1, int(retrieval_result.get('confidence', 0.0) * 5)))
+
+        # Create compatible fallback structure for the existing fallback manager
+        compatible_retrieval_result = {
+            'confidence': {'confidence_score': retrieval_result.get('confidence', 0.0)},
+            'retrieval_details': {'final_docs_count': len(retrieval_result.get('sources', []))},
+            'recommendation': {'action': 'proceed'},
+            'documents_text': retrieval_result.get('documents_text', '')
+        }
+
         fallback_decision = fallback_manager.should_provide_fallback(
-            retrieval_result, estimated_llm_confidence, chat_request.message, conversation_context
+            compatible_retrieval_result, estimated_llm_confidence, chat_request.message, conversation_context
         )
-        
+
         print(f"   Fallback decision: {fallback_decision['should_fallback']} ({fallback_decision.get('fallback_type', 'none')})")
         print(f"   Query category: {fallback_decision['query_category']}")
         
@@ -536,12 +846,13 @@ async def chat_enhanced(chat_request: ChatRequest, request: Request, user: dict 
         onboarding_api = get_onboarding_api()
         
         response = ask_llm_personalized(
-            chat_request.message, 
-            context_documents, 
-            history_for_context, 
+            chat_request.message,
+            context_documents,
+            history_for_context,
             user_email,
             user,  # Pass full user data including name from JWT
-            onboarding_api
+            onboarding_api,
+            query_mode=chat_request.query_mode
         )
         
         print(f"   LLM confidence: {response.get('confidence', 3)}")
@@ -634,12 +945,57 @@ async def auth_status(credentials: HTTPAuthorizationCredentials = Depends(securi
 
 @app.get("/user/profile")
 async def get_user_profile(user: dict = Depends(get_current_user)):
-    """Get authenticated user's profile information"""
-    return {
+    """Get authenticated user's profile information with student data"""
+    user_email = user["email"]
+
+    # Get basic user info
+    user_info = {
         "id": user["id"],
         "name": user["name"],
         "email": user["email"]
     }
+
+    # Try to get student profile information
+    try:
+        from features.onboarding.onboarding_db import OnboardingDatabaseManager
+        onboarding_db = OnboardingDatabaseManager()
+
+        # Get student profile data
+        student_profile = onboarding_db.get_student_profile(user_email)
+
+        if student_profile:
+            # Add student-specific information to the user profile
+            user_info.update({
+                "student_type": student_profile.get("student_type"),
+                "academic_level": student_profile.get("academic_level"),
+                "enrolled_year": student_profile.get("enrolled_year"),
+                "degree_program": student_profile.get("degree_program"),
+                "primary_major": student_profile.get("primary_major"),
+                "expected_graduation": student_profile.get("expected_graduation"),
+                "enrollment_status": student_profile.get("enrollment_status"),
+                "is_onboarding_complete": student_profile.get("is_onboarding_complete", False),
+                "profile_completion_percentage": student_profile.get("profile_completion_percentage", 0)
+            })
+        else:
+            # If no student profile exists, set defaults
+            user_info.update({
+                "student_type": None,
+                "academic_level": None,
+                "enrolled_year": None,
+                "degree_program": None,
+                "primary_major": None,
+                "expected_graduation": None,
+                "enrollment_status": None,
+                "is_onboarding_complete": False,
+                "profile_completion_percentage": 0
+            })
+
+    except Exception as e:
+        print(f"[USER_PROFILE] Error fetching student profile: {e}")
+        # If there's an error, just return basic user info
+        pass
+
+    return user_info
 
 @app.post("/logout")
 async def logout(request: Request):
@@ -796,7 +1152,11 @@ async def check_availability(
 
 @app.get("/test/config")
 async def test_config():
-    """Test endpoint to verify OAuth configuration"""
+    """Test endpoint to verify OAuth configuration - Development only"""
+    # Only allow in development environment
+    if os.getenv("ENVIRONMENT", "production").lower() != "development":
+        raise HTTPException(status_code=404, detail="Not found")
+
     return {
         "client_id": CLIENT_ID[:10] + "...",  # Only show first 10 chars for security
         "tenant_id": TENANT_ID,
@@ -806,7 +1166,11 @@ async def test_config():
 
 @app.get("/test/auth")
 async def test_auth(request: Request):
-    """Test endpoint to check authentication"""
+    """Test endpoint to check authentication - Development only"""
+    # Only allow in development environment
+    if os.getenv("ENVIRONMENT", "production").lower() != "development":
+        raise HTTPException(status_code=404, detail="Not found")
+
     session_data = dict(request.session)
     user = request.session.get('user')
     return {
@@ -1000,46 +1364,9 @@ async def complete_onboarding(
         print(f"Failed to complete onboarding for {user_email}: {e}")
         raise HTTPException(status_code=500, detail="Failed to complete onboarding")
 
-@app.post("/api/onboarding/course-interests")
-async def add_course_interest(
-    interest_data: CourseInterestRequest,
-    user: dict = Depends(get_current_user),
-    onboarding_api: OnboardingAPI = Depends(get_onboarding_api)
-):
-    """Add course to student's interest list"""
-    user_email = validate_user_email(user["email"])
-    validate_course_code(interest_data.course_code)
-    success = onboarding_api.add_course_interest(user_email, interest_data)
-    return {"success": success, "message": "Course interest added successfully"}
-
-@app.get("/api/onboarding/course-interests")
-async def get_course_interests(
-    user: dict = Depends(get_current_user),
-    onboarding_api: OnboardingAPI = Depends(get_onboarding_api)
-):
-    """Get student's course interests"""
-    user_email = validate_user_email(user["email"])
-    return {"course_interests": onboarding_api.get_student_course_interests(user_email)}
-
-@app.post("/api/onboarding/academic-goals")
-async def add_academic_goal(
-    goal_data: AcademicGoalRequest,
-    user: dict = Depends(get_current_user),
-    onboarding_api: OnboardingAPI = Depends(get_onboarding_api)
-):
-    """Add academic goal for student"""
-    user_email = validate_user_email(user["email"])
-    success = onboarding_api.add_academic_goal(user_email, goal_data)
-    return {"success": success, "message": "Academic goal added successfully"}
-
-@app.get("/api/onboarding/academic-goals")
-async def get_academic_goals(
-    user: dict = Depends(get_current_user),
-    onboarding_api: OnboardingAPI = Depends(get_onboarding_api)
-):
-    """Get student's academic goals"""
-    user_email = validate_user_email(user["email"])
-    return {"academic_goals": onboarding_api.get_student_academic_goals(user_email)}
+# Removed deprecated API endpoints for student_course_interests and student_academic_goals tables
+# These tables were removed as part of database optimization
+# Field interests are now stored directly in student_profiles table
 
 @app.get("/api/onboarding/academic-history")
 async def get_academic_history(
@@ -1061,6 +1388,42 @@ async def get_field_interests(
     """Get student's field interests from onboarding"""
     user_email = validate_user_email(user["email"])
     return {"field_interests": onboarding_api.get_student_field_interests(user_email)}
+
+@app.post("/test/chat-no-auth")
+async def test_chat_no_auth(request: dict):
+    """TEST ENDPOINT - Bypasses auth to test LLM with no truncation fix"""
+    # Only allow in development
+    if os.getenv("ENVIRONMENT", "production").lower() == "production":
+        raise HTTPException(status_code=404, detail="Not found")
+    
+    message = request.get("message", "")
+    student_data = request.get("student_data", {
+        "name": "Test Student",
+        "major": "Cybersecurity", 
+        "year": "2024-2025",
+        "student_id": "TEST123"
+    })
+    
+    print(f"🔥 TEST ENDPOINT - Testing no truncation fix")
+    print(f"📝 Query: {message}")
+    print(f"👤 Student Data: {student_data}")
+    
+    try:
+        # Call the LLM directly
+        response = ask_llm_personalized(message, student_data)
+        
+        return {
+            "response": response,
+            "test_mode": True,
+            "student_data": student_data,
+            "message": "TEST ENDPOINT - No authentication required"
+        }
+    except Exception as e:
+        print(f"❌ Error in test endpoint: {e}")
+        return {
+            "error": str(e),
+            "test_mode": True
+        }
 
 # Catch-all route for SPA routing (must be last!)
 @app.get("/{path:path}")
